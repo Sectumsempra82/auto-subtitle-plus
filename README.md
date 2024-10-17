@@ -4,7 +4,7 @@ This repository uses `ffmpeg` and [OpenAI's Whisper](https://openai.com/blog/whi
 
 ## Installation
 
-To get started, you'll need Python 3.7 or newer. Install the binary by running the following command:
+To get started, you'll need Python between 3.7 and 3.11.9 newer versions are not compatible with the current wishper pip requirements. This might change in future. Install the binary by running the following command:
 
     pip install git+https://github.com/m1guelpf/auto-subtitle.git
 
