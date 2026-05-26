@@ -44,10 +44,6 @@ brew install ffmpeg
 
 # on Windows using Chocolatey (https://chocolatey.org/)
 choco install ffmpeg
-
-#you might also need python-ffmpeg
-
-pip3 install python-ffmpeg
 ```
 
 ## How to make it use your GPU for 3x faster generations

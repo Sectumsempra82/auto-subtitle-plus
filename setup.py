@@ -9,7 +9,8 @@ setup(
     install_requires=[
         'youtube-dl',
         'psutil',
-        'openai-whisper'
+        'openai-whisper',
+        'python-ffmpeg',
     ],
     description="Automatically generate and/or embed subtitles into your videos",
     entry_points={
