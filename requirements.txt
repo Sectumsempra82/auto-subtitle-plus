@@ -1,2 +1,5 @@
 openai-whisper
 psutil
+deep-translator
+ffmpeg-python
+stable-ts
