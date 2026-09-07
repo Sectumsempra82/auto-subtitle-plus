@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    version="0.2",
+    version="0.3.0rc1",
     name="auto_subtitle_plus",
     packages=find_packages(),
     py_modules=["auto_subtitle_plus"],
@@ -22,6 +22,9 @@ setup(
         'filelock>=3.18,<4',
     ],
     extras_require={
+        'gui': [
+            'PySide6-Essentials==6.11.2',
+        ],
         'benchmark': [
             'jiwer',
             'srt',
@@ -42,6 +45,9 @@ setup(
             'auto_subtitle_plus=auto_subtitle_plus.cli:main',
             'auto_subtitle_benchmark=auto_subtitle_plus.benchmark:main',
             'auto_subtitle_translation_benchmark=auto_subtitle_plus.translation_benchmark:main',
+        ],
+        'gui_scripts': [
+            'auto_subtitle_plus_gui=auto_subtitle_plus.desktop:main',
         ],
     },
     include_package_data=True,

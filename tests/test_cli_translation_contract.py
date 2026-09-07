@@ -1,11 +1,13 @@
 import argparse
+import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
 
-from auto_subtitle_plus import cli
+from auto_subtitle_plus import cli, processing
 from auto_subtitle_plus.translation_types import SubtitleCue, TranslationResult
 
 
@@ -107,14 +109,14 @@ class CliTranslationContractTests(unittest.TestCase):
             }
 
         with mock.patch.object(sys, "argv", argv), \
-             mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-             mock.patch.object(cli, "is_audio", return_value=True), \
-             mock.patch.object(cli, "default_device", return_value="cpu"), \
+             mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+             mock.patch.object(processing, "is_audio", return_value=True), \
+             mock.patch.object(processing, "default_device", return_value="cpu"), \
              mock.patch.object(cli, "validate_backend_options"), \
-             mock.patch.object(cli, "load_backend_model", side_effect=AssertionError("in-process ASR loaded")), \
-             mock.patch.object(cli, "run_transcription_worker", side_effect=fake_worker) as worker, \
-             mock.patch.object(cli, "TranslationPipeline", FakeTranslationPipeline), \
-             mock.patch.object(cli, "close_translation_runtime"):
+             mock.patch.object(processing, "load_backend_model", side_effect=AssertionError("in-process ASR loaded")), \
+             mock.patch.object(processing, "run_transcription_worker", side_effect=fake_worker) as worker, \
+             mock.patch.object(processing, "TranslationPipeline", FakeTranslationPipeline), \
+             mock.patch.object(processing, "close_translation_runtime"):
             return cli.main(), worker
 
     def test_cli_translate_to_defaults_to_local_direct_and_writes_final_translation(self):
@@ -153,6 +155,79 @@ class CliTranslationContractTests(unittest.TestCase):
         self.assertNotIn("ciao", srt)
         self.assertEqual(txt.strip(), "fr:translated")
 
+    def test_cli_progress_json_stdout_lines_are_json_with_completed_and_resources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            media = Path(tmp) / "clip.wav"
+            media.write_bytes(b"fake")
+            output = Path(tmp) / "out"
+            script = Path(tmp) / "run_cli_progress_json.py"
+            repo = Path(__file__).resolve().parents[1]
+            script.write_text(
+                f"""
+import sys
+from pathlib import Path
+from unittest import mock
+
+sys.path.insert(0, {str(repo)!r})
+
+from auto_subtitle_plus import cli, processing
+
+class FakeModel:
+    def transcribe(self, *_args, **_kwargs):
+        print("backend raw stdout noise")
+        return {{"language": "en", "segments": [{{"start": 0.0, "end": 1.0, "text": "hello"}}]}}
+    def close(self):
+        pass
+
+fingerprint = {{
+    "backend": "stable",
+    "model": "small",
+    "fingerprint_available": True,
+    "model_source": "test",
+    "model_revision": "revision",
+    "model_sha256": "sha256",
+    "package": {{}},
+}}
+
+sys.argv = [
+    "auto_subtitle_plus",
+    {str(media)!r},
+    "--output-srt",
+    "--output-dir",
+    {str(output)!r},
+    "--device",
+    "cpu",
+    "--progress-json",
+    "--resources",
+]
+
+with mock.patch.object(cli, "validate_backend_options"), \\
+     mock.patch.object(processing, "validate_backend_options"), \\
+     mock.patch.object(processing, "load_backend_model", return_value=FakeModel()), \\
+     mock.patch.object(processing, "asr_backend_fingerprint", return_value=fingerprint):
+    raise SystemExit(cli.main())
+""",
+                encoding="utf-8",
+            )
+
+            completed = subprocess.run(
+                [sys.executable, str(script)],
+                cwd=str(repo),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        stdout_lines = [line for line in completed.stdout.splitlines() if line.strip()]
+        self.assertGreater(len(stdout_lines), 0)
+        events = [json.loads(line) for line in stdout_lines]
+        self.assertTrue(all(isinstance(event, dict) and "state" in event for event in events))
+        self.assertIn("completed", [event["state"] for event in events])
+        self.assertIn("resources", [event["state"] for event in events])
+        self.assertNotIn("backend raw stdout noise", completed.stdout)
+        self.assertIn("backend raw stdout noise", completed.stderr)
+
     def test_faster_source_cache_requires_resolved_snapshot_and_keys_by_revision(self):
         args = self.faster_args()
 
@@ -161,19 +236,19 @@ class CliTranslationContractTests(unittest.TestCase):
             media.write_bytes(b"same-audio-content")
 
             with mock.patch.object(
-                cli,
+                processing,
                 "asr_backend_fingerprint",
                 return_value=self.faster_fingerprint("unknown", available=False),
             ):
-                self.assertIsNone(cli.cacheable_source_stage_settings(args))
+                self.assertIsNone(processing.cacheable_source_stage_settings(args))
 
-            with mock.patch.object(cli, "asr_backend_fingerprint", return_value=self.faster_fingerprint("snapshot-a")):
-                settings_a = cli.cacheable_source_stage_settings(args)
-                key_a = cli.source_cache_key(str(media), settings_a)
+            with mock.patch.object(processing, "asr_backend_fingerprint", return_value=self.faster_fingerprint("snapshot-a")):
+                settings_a = processing.cacheable_source_stage_settings(args)
+                key_a = processing.source_cache_key(str(media), settings_a)
 
-            with mock.patch.object(cli, "asr_backend_fingerprint", return_value=self.faster_fingerprint("snapshot-b")):
-                settings_b = cli.cacheable_source_stage_settings(args)
-                key_b = cli.source_cache_key(str(media), settings_b)
+            with mock.patch.object(processing, "asr_backend_fingerprint", return_value=self.faster_fingerprint("snapshot-b")):
+                settings_b = processing.cacheable_source_stage_settings(args)
+                key_b = processing.source_cache_key(str(media), settings_b)
 
         self.assertIsNotNone(settings_a)
         self.assertEqual(settings_a["asr_fingerprint"]["repo_id"], "Systran/faster-whisper-large-v3-turbo")
@@ -222,7 +297,7 @@ class CliTranslationContractTests(unittest.TestCase):
                     "google",
                     "--offline",
                 ],
-            ), mock.patch.object(cli, "load_backend_model", side_effect=AssertionError("model loaded")):
+            ), mock.patch.object(processing, "load_backend_model", side_effect=AssertionError("model loaded")):
                 with self.assertRaises(SystemExit):
                     cli.main()
 
@@ -245,7 +320,7 @@ class CliTranslationContractTests(unittest.TestCase):
                             "--translation-route",
                             "via-en",
                         ],
-                    ), mock.patch.object(cli, "load_backend_model", side_effect=AssertionError("model loaded")):
+                    ), mock.patch.object(processing, "load_backend_model", side_effect=AssertionError("model loaded")):
                         with self.assertRaises(SystemExit):
                             cli.main()
 
@@ -328,12 +403,12 @@ class CliTranslationContractTests(unittest.TestCase):
                     "--translation-cache-dir",
                     str(cache),
                 ],
-            ), mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-                 mock.patch.object(cli, "default_device", return_value="cpu"), \
+            ), mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing, "default_device", return_value="cpu"), \
                  mock.patch.object(cli, "validate_backend_options"), \
-                 mock.patch.object(cli, "load_backend_model", side_effect=AssertionError("ASR loaded")), \
-                 mock.patch.object(cli, "TranslationPipeline", FakeTranslationPipeline), \
-                 mock.patch.object(cli, "close_translation_runtime"):
+                 mock.patch.object(processing, "load_backend_model", side_effect=AssertionError("ASR loaded")), \
+                 mock.patch.object(processing, "TranslationPipeline", FakeTranslationPipeline), \
+                 mock.patch.object(processing, "close_translation_runtime"):
                 retry_exit = cli.main()
 
         self.assertEqual(first_exit, 0)
@@ -350,16 +425,16 @@ class CliTranslationContractTests(unittest.TestCase):
             args.translation_cache_dir = str(cache)
             resolved_fingerprint = self.faster_fingerprint("snapshot-ready")
 
-            with mock.patch.object(cli, "asr_backend_fingerprint", return_value=resolved_fingerprint):
-                cache_settings = cli.cacheable_source_stage_settings(args)
-                source_key = cli.source_cache_key(str(media), cache_settings)
+            with mock.patch.object(processing, "asr_backend_fingerprint", return_value=resolved_fingerprint):
+                cache_settings = processing.cacheable_source_stage_settings(args)
+                source_key = processing.source_cache_key(str(media), cache_settings)
 
-            cues = cli.source_cues_from_transcript(
+            cues = processing.source_cues_from_transcript(
                 {"language": "it", "segments": [{"start": 0.0, "end": 1.0, "text": "ciao"}]},
                 source_key,
                 "it",
             )
-            cli.cache_source_transcript(str(cache), source_key, cues, "it")
+            processing.cache_source_transcript(str(cache), source_key, cues, "it")
 
             with mock.patch.object(
                 sys,
@@ -383,14 +458,14 @@ class CliTranslationContractTests(unittest.TestCase):
                     "--translation-cache-dir",
                     str(cache),
                 ],
-            ), mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-                 mock.patch.object(cli, "default_device", return_value="cpu"), \
+            ), mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing, "default_device", return_value="cpu"), \
                  mock.patch.object(cli, "validate_backend_options"), \
-                 mock.patch.object(cli, "asr_backend_fingerprint", return_value=resolved_fingerprint), \
-                 mock.patch.object(cli, "load_backend_model", side_effect=AssertionError("ASR model loaded")), \
-                 mock.patch.object(cli, "run_transcription_worker", side_effect=AssertionError("ASR worker loaded")), \
-                 mock.patch.object(cli, "TranslationPipeline", FakeTranslationPipeline), \
-                 mock.patch.object(cli, "close_translation_runtime"):
+                 mock.patch.object(processing, "asr_backend_fingerprint", return_value=resolved_fingerprint), \
+                 mock.patch.object(processing, "load_backend_model", side_effect=AssertionError("ASR model loaded")), \
+                 mock.patch.object(processing, "run_transcription_worker", side_effect=AssertionError("ASR worker loaded")), \
+                 mock.patch.object(processing, "TranslationPipeline", FakeTranslationPipeline), \
+                 mock.patch.object(processing, "close_translation_runtime"):
                 retry_exit = cli.main()
 
         self.assertEqual(retry_exit, 0)

@@ -201,6 +201,34 @@ class LocalTranslationContractTests(unittest.TestCase):
 
         self.assertEqual(result, executable)
 
+    def test_ensure_llama_runtime_prefers_verified_bundled_runtime(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            bundled = bundle / "runtimes" / f"llama-{local_translation.LLAMA_RELEASE}-cpu"
+            executable = self.runtime_receipt(bundled, Path("bin") / "llama-server.exe", b"exe")
+
+            with mock.patch.object(local_translation.sys, "platform", "win32"), \
+                 mock.patch.object(local_translation.portable.sys, "frozen", True, create=True), \
+                 mock.patch.object(local_translation.portable.sys, "_MEIPASS", str(bundle), create=True), \
+                 mock.patch.dict(sys.modules, {"requests": None}):
+                result = local_translation.ensure_llama_runtime("cpu", offline=True, cache_dir=Path(tmp) / "cache")
+
+        self.assertEqual(result, executable)
+
+    def test_ensure_llama_runtime_rejects_corrupt_bundled_runtime_in_offline_mode(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            bundled = bundle / "runtimes" / f"llama-{local_translation.LLAMA_RELEASE}-cpu"
+            self.runtime_receipt(bundled, Path("bin") / "llama-server.exe", b"exe")
+            (bundled / "bin" / "llama-server.exe").write_bytes(b"bad")
+
+            with mock.patch.object(local_translation.sys, "platform", "win32"), \
+                 mock.patch.object(local_translation.portable.sys, "frozen", True, create=True), \
+                 mock.patch.object(local_translation.portable.sys, "_MEIPASS", str(bundle), create=True), \
+                 mock.patch.dict(sys.modules, {"requests": None}):
+                with self.assertRaisesRegex(RuntimeError, "offline mode forbids downloads"):
+                    local_translation.ensure_llama_runtime("cpu", offline=True, cache_dir=Path(tmp) / "cache")
+
     def test_ensure_llama_runtime_offline_rejects_corrupt_ready_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             directory = (
@@ -236,6 +264,19 @@ class LocalTranslationContractTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
+            self.assertFalse(local_translation._runtime_valid(directory))
+
+    def test_runtime_receipt_rejects_malformed_or_empty_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp) / "runtime"
+            directory.mkdir()
+            (directory / "receipt.json").write_text("{bad", encoding="utf-8")
+            self.assertFalse(local_translation._runtime_valid(directory))
+
+            (directory / "receipt.json").write_text("[]", encoding="utf-8")
+            self.assertFalse(local_translation._runtime_valid(directory))
+
+            (directory / "receipt.json").write_text(json.dumps({"name": "bin/llama-server.exe"}), encoding="utf-8")
             self.assertFalse(local_translation._runtime_valid(directory))
 
     def test_ensure_llama_runtime_rejects_unsafe_archive_member_before_extract(self):

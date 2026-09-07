@@ -29,11 +29,34 @@ class CudaRuntimeContractTests(unittest.TestCase):
     def test_absent_packages_are_noop(self):
         with mock.patch.object(cuda_runtime.sys, "platform", "win32"), \
              mock.patch.object(cuda_runtime, "distribution", side_effect=cuda_runtime.PackageNotFoundError), \
+             mock.patch.object(cuda_runtime.portable, "bundled_cuda_paths", return_value=[]), \
              mock.patch.object(cuda_runtime.os, "environ", {"PATH": "original"}):
             cuda_runtime.configure_windows_cuda()
             path = cuda_runtime.os.environ["PATH"]
 
         self.assertEqual(path, "original")
+
+    def test_bundled_cuda_paths_are_prepended_before_distribution_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            bundled = root / "bundle" / "nvidia" / "cublas" / "bin"
+            wheel = root / "wheel" / "nvidia" / "cudnn" / "bin"
+            bundled.mkdir(parents=True)
+            wheel.mkdir(parents=True)
+
+            def fake_distribution(name):
+                if name == "nvidia-cudnn-cu12":
+                    return FakeDistribution(root / "wheel")
+                raise cuda_runtime.PackageNotFoundError
+
+            with mock.patch.object(cuda_runtime.sys, "platform", "win32"), \
+                 mock.patch.object(cuda_runtime.portable, "bundled_cuda_paths", return_value=[bundled]), \
+                 mock.patch.object(cuda_runtime, "distribution", side_effect=fake_distribution), \
+                 mock.patch.object(cuda_runtime.os, "environ", {"PATH": "original"}):
+                cuda_runtime.configure_windows_cuda()
+                path = cuda_runtime.os.environ["PATH"]
+
+        self.assertEqual(path.split(os.pathsep)[:2], [str(bundled), str(wheel)])
 
     def test_only_existing_official_distribution_paths_are_prepended(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -49,6 +72,7 @@ class CudaRuntimeContractTests(unittest.TestCase):
                 raise AssertionError(f"unexpected package lookup: {name}")
 
             with mock.patch.object(cuda_runtime.sys, "platform", "win32"), \
+                 mock.patch.object(cuda_runtime.portable, "bundled_cuda_paths", return_value=[]), \
                  mock.patch.object(cuda_runtime, "distribution", side_effect=fake_distribution), \
                  mock.patch.object(cuda_runtime.os, "environ", {"PATH": "original"}):
                 cuda_runtime.configure_windows_cuda()

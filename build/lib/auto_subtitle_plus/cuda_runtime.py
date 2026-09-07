@@ -2,6 +2,8 @@ import os
 import sys
 from importlib.metadata import PackageNotFoundError, distribution
 
+from . import portable
+
 
 def configure_windows_cuda() -> None:
     if sys.platform != "win32":
@@ -15,6 +17,11 @@ def configure_windows_cuda() -> None:
     current_path = os.environ.get("PATH", "")
     known_paths = {os.path.normcase(path) for path in current_path.split(os.pathsep)}
     additions = []
+    for directory in portable.bundled_cuda_paths():
+        path = str(directory)
+        if os.path.normcase(path) not in known_paths:
+            additions.append(path)
+            known_paths.add(os.path.normcase(path))
     for package, relative_path in packages:
         try:
             directory = distribution(package).locate_file(relative_path)

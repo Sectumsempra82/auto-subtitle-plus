@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from auto_subtitle_plus import cli, utils
+from auto_subtitle_plus import cli, processing, utils
 
 
 class FasterBackendContractTests(unittest.TestCase):
@@ -544,10 +544,10 @@ class FasterBackendContractTests(unittest.TestCase):
             fake_whisper = types.SimpleNamespace(available_models=mock.Mock(return_value=["small", "turbo"]))
             with mock.patch.object(sys, "argv", args), \
                  mock.patch.object(backends.whisper, "module", fake_whisper), \
-                 mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-                 mock.patch.object(cli, "is_audio", return_value=True), \
-                 mock.patch.object(cli, "default_device", return_value="cpu"), \
-                 mock.patch.object(cli, "load_backend_model", return_value=fake_model):
+                 mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing, "is_audio", return_value=True), \
+                 mock.patch.object(processing, "default_device", return_value="cpu"), \
+                 mock.patch.object(processing, "load_backend_model", return_value=fake_model):
                 exit_code = cli.main()
 
             self.assertNotEqual(exit_code, 0)
@@ -607,11 +607,11 @@ class FasterBackendContractTests(unittest.TestCase):
                     "1",
                 ],
             ), mock.patch.object(backends.whisper, "module", fake_whisper), \
-                 mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
                  mock.patch.object(cli.multiprocessing, "Pool", FakePool), \
-                 mock.patch.object(cli, "ffmpeg_extract_audio", side_effect=fake_extract), \
-                 mock.patch.object(cli, "default_device", return_value="cpu"), \
-                 mock.patch.object(cli, "load_backend_model", return_value=fake_model):
+                 mock.patch.object(processing, "ffmpeg_extract_audio", side_effect=fake_extract), \
+                 mock.patch.object(processing, "default_device", return_value="cpu"), \
+                 mock.patch.object(processing, "load_backend_model", return_value=fake_model):
                 exit_code = cli.main()
 
         self.assertNotEqual(exit_code, 0)
@@ -643,8 +643,8 @@ class FasterBackendContractTests(unittest.TestCase):
                 Path(path).write_bytes(b"fake")
 
             with mock.patch.object(cli.multiprocessing, "Pool", FakePool), \
-                 mock.patch.object(cli, "ffmpeg_extract_audio"):
-                audio_map, failures = cli.get_audio(
+                 mock.patch.object(processing, "ffmpeg_extract_audio"):
+                audio_map, failures = processing.get_audio(
                     [first_video, audio, second_video],
                     save_audio=True,
                     output_dir=tmp,
@@ -682,10 +682,10 @@ class FasterBackendContractTests(unittest.TestCase):
                     "--output-dir",
                     tmp,
                 ],
-            ), mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-                 mock.patch.object(cli, "is_audio", return_value=True), \
-                 mock.patch.object(cli, "load_backend_model", return_value=fake_model), \
-                 mock.patch.object(cli, "write_subtitle", side_effect=RuntimeError("disk full")):
+            ), mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing, "is_audio", return_value=True), \
+                 mock.patch.object(processing, "load_backend_model", return_value=fake_model), \
+                 mock.patch.object(processing, "write_subtitle", side_effect=RuntimeError("disk full")):
                 exit_code = cli.main()
 
         self.assertNotEqual(exit_code, 0)
@@ -712,11 +712,11 @@ class FasterBackendContractTests(unittest.TestCase):
                     "--output-dir",
                     tmp,
                 ],
-            ), mock.patch.object(cli.glob, "glob", side_effect=lambda value: [value]), \
-                 mock.patch.object(cli, "get_audio", return_value=({str(video): str(audio)}, 0)), \
-                 mock.patch.object(cli, "is_audio", return_value=False), \
-                 mock.patch.object(cli, "load_backend_model", return_value=fake_model), \
-                 mock.patch.object(cli, "run_ffmpeg_with_progress", side_effect=RuntimeError("ffmpeg failed")):
+            ), mock.patch.object(processing.glob, "glob", side_effect=lambda value: [value]), \
+                 mock.patch.object(processing, "get_audio", return_value=({str(video): str(audio)}, 0)), \
+                 mock.patch.object(processing, "is_audio", return_value=False), \
+                 mock.patch.object(processing, "load_backend_model", return_value=fake_model), \
+                 mock.patch.object(processing, "run_ffmpeg_with_progress", side_effect=RuntimeError("ffmpeg failed")):
                 exit_code = cli.main()
 
         self.assertNotEqual(exit_code, 0)

@@ -4,6 +4,156 @@ Auto Subtitle Plus generates subtitles for video or audio files, can optionally 
 
 This fork keeps original-language subtitles as the default. Translation only happens when `--translate-to` is provided, and bilingual output only happens when `--bilingual` is provided.
 
+## CLI And Desktop
+
+### Screenshots
+
+Actual desktop UI with example queue filenames; no private media is shown.
+Resource monitoring is paused for these documentation captures.
+
+![Local-file queue and transcription settings](assets/screenshots/desktop-queue.png)
+
+![Local translation model, language and route settings](assets/screenshots/desktop-translation.png)
+
+Both frontends use the same processing library. The CLI has no Qt dependency;
+the optional desktop frontend adds a single-window local-file queue, settings,
+progress, output browsing, persistent queue state, and live resource meters.
+
+```powershell
+pip install -e ".[gui,faster-cuda,benchmark]"
+auto_subtitle_plus_gui
+# Equivalent desktop module entry point:
+python -m auto_subtitle_plus.desktop
+# The existing CLI remains available:
+auto_subtitle_plus video.mp4 --output-srt
+```
+
+The pip-installed Windows launchers are `auto_subtitle_plus.exe` and
+`auto_subtitle_plus_gui.exe`. Those launchers require Python. Separate portable
+Windows builds acquire app-local Python and processing runtimes on first use; see below. Desktop support uses the pinned
+`PySide6-Essentials` package; normal CLI installations do not require it.
+
+The desktop accepts local audio/video files, multiple selection, drag-and-drop,
+and local folders (top-level media only). It rejects URLs and UNC network
+paths. Reorder or remove queued items, retry selected items, or clear completed
+items without deleting media. Settings apply to the pending batch when Start
+is pressed and stay locked while it runs. Adding files during a batch uses that
+batch's settings. Pause finishes the current file; Cancel stops it and pauses
+the queue. Failed files remain visible with diagnostics while later jobs continue.
+
+Settings are grouped into Speech, Translate, Layout, Files, and System tabs.
+They expose the supported backend/model/device options, local or explicitly
+online translation, direct/pivot routing, context/glossary, caption readability,
+all output formats, offline mode, stage retries, and cache location/clearing.
+Legacy no-op translation worker flags are intentionally not GUI controls.
+Desktop output defaults beside each source file; replacement is off by default
+and requires confirmation when enabled. CLI output defaults remain unchanged.
+
+Queue/settings state is stored in `%LOCALAPPDATA%\AutoSubtitlePlus\desktop`.
+Restoring a queue never starts it automatically. Active jobs interrupted by a
+restart are marked interrupted. Queue state contains local filenames; it is
+not uploaded or included in Git.
+
+Progress is stage-specific: extraction/encoding use FFmpeg progress and
+translation/downloads use engine events. Stages without reliable percentages
+show indeterminate progress and elapsed time rather than a fabricated estimate.
+Resource meters show system CPU/RAM, application process-tree CPU/RAM, GPU
+load and used/total VRAM when `nvidia-smi` is available, disk capacity, and
+system-wide network rates/totals since launch. Network totals are not attributed
+to this application. Unavailable telemetry is explicitly identified.
+
+### Shared Library
+
+`auto_subtitle_plus.api` provides `JobOptions`, `JobRunner`, and `JobResult`.
+The persistent runner provides a cancellable process boundary for desktop and
+other hosts; `auto_subtitle_plus.processing` owns the actual transcription,
+translation and export orchestration used by both frontends.
+`auto_subtitle_plus.resources.ResourceMonitor` is Qt-independent telemetry.
+Only `auto_subtitle_plus.desktop` owns widgets and desktop queue persistence.
+
+```python
+from auto_subtitle_plus.api import JobOptions, JobRunner
+
+if __name__ == "__main__":
+    runner = JobRunner()
+    try:
+        result = runner.run(
+            JobOptions(path=r"C:\Media\clip.mp4", output_srt=True),
+            progress=lambda event: print(event),
+            cancel=lambda: False,
+        )
+        print(result.status, result.outputs, result.error)
+    finally:
+        runner.close()
+```
+
+Additional CLI controls: `--progress-json`, `--resources`, `--no-overwrite`,
+`--max-chars-per-line`, `--max-lines`, `--max-cps`, `--min-duration`,
+`--max-duration`, `--context`, and `--glossary`. Use `--help` for the exact
+value formats. These controls call the shared library, not a separate GUI engine.
+
+### Desktop Credits
+
+- [Qt / PySide6](https://code.qt.io/cgit/pyside/pyside-setup.git/) and The Qt Company/contributors: native widgets, standard icons, signals and threading. Community libraries carry LGPLv3/GPLv3 terms; their notices and applicable redistribution obligations remain separate from this project's MIT license. See [Qt licensing](https://doc.qt.io/qtforpython-6/licenses.html).
+- [psutil](https://github.com/giampaolo/psutil), Giampaolo Rodola and contributors: shared system/process telemetry, BSD-3-Clause.
+- [Subtitle Edit](https://github.com/SubtitleEdit/subtitleedit), Nikolaj Olsson and contributors: inspiration for compact subtitle-oriented desktop controls. Its current [license](https://github.com/SubtitleEdit/subtitleedit/blob/main/LICENSE) is MIT. No source code or artwork was copied.
+- [NVIDIA System Management Interface](https://docs.nvidia.com/deploy/nvidia-smi/index.html): optional GPU measurements through the user's installed driver tool; no NVIDIA executable is redistributed by the GUI package.
+
+All existing fork, model, and runtime credits below continue to apply to both
+frontends. Portable builds include dependency notices and matching application
+source; public redistribution additionally requires the licensing checks below.
+
+### Portable Windows Editions
+
+Download the current **Windows x64 release candidate** from
+[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.1):
+
+- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.1/AutoSubtitlePlus-CLI-Windows-x64.zip)
+- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.1/AutoSubtitlePlus-GUI-Windows-x64.zip)
+
+Each archive is under 2 MiB, not an all-dependencies bundle. Initial
+CLI CPU dependency archives total approximately 472 MiB; prepared runtime files
+occupy approximately 1.91 GiB, plus retained download archives and model weights.
+GUI and optional GPU dependencies add to those totals. The builds are unsigned.
+CPU setup, offline transcription/translation and GUI queue execution were tested
+on the development machine. Clean-Windows and the new CUDA-bootstrap path remain
+unverified; this release is explicitly a pre-release, not a certified installer.
+
+`Build Portable.cmd` rebuilds both small Windows x64 launcher editions from the
+current code, runs regression tests, and creates ZIPs with checksums under
+`dist/windows-light`. No installed Python is needed on the destination.
+See [build commands, prerequisites, validation and licensing](packaging/README.md).
+
+Extract the whole ZIP and launch the CLI or GUI executable. First run downloads
+pinned, checksum-verified Python, FFmpeg and library packages into app-local
+storage. CPU is the initial runtime profile; `Setup CUDA.cmd` explicitly adds
+GPU dependencies. CLI setup excludes Qt. llama.cpp and models are acquired
+automatically when selected. An NVIDIA graphics driver is still required for CUDA.
+Portable models and settings live in `data` beside the EXE; preserve it on upgrade.
+`AUTO_SUBTITLE_PLUS_DATA_DIR` selects a shared writable data folder for both editions.
+No administrator rights, runtime pip/compiler, global Python or PATH changes are
+needed. System-wide installation is never automatic and requires separate explicit
+approval. `Check Dependencies.cmd` verifies installed files; `Repair Dependencies.cmd`
+rebuilds them. See the packaged `README.txt` and [packaging guide](packaging/README.md).
+The small launchers use inbox Windows PowerShell/.NET Framework. Wheel preparation
+uses [PyPA installer](https://github.com/pypa/installer) (MIT). Only Whisper and
+Stable-TS, which lack compatible published wheels, are prebuilt and bundled.
+
+The following launcher-only commands work with either edition's EXE:
+
+| Command | Purpose |
+| --- | --- |
+| `--runtime-device cpu --setup-only` | Prepare/select the CPU runtime without starting the app. |
+| `--runtime-device cuda --setup-only` | Explicitly prepare/select the larger CUDA runtime. |
+| `--check-dependencies` | Verify installed dependency checksums; never download. |
+| `--repair-dependencies --setup-only` | Rebuild the selected runtime from verified packages. |
+| `--setup-only --offline` | Prepare only from existing verified download archives. |
+
+For example, `auto_subtitle_plus.exe --offline --help` uses the prepared local
+runtime. Model and llama.cpp helper acquisition follows the processing settings;
+`--offline` also prevents missing models/helpers from being downloaded. The
+equivalent setup/check/repair `.cmd` shortcuts are included in each ZIP.
+
 ---
 
 ## Credits And Sources
@@ -24,7 +174,7 @@ The transcription upgrades use these upstream libraries and model sources:
 - [SYSTRAN/faster-whisper](https://github.com/SYSTRAN/faster-whisper): the optional CTranslate2 backend, model registry, quantization, batching, and Silero VAD integration.
 - [Distil-Whisper / Distil-Large-v3.5](https://huggingface.co/distil-whisper/distil-large-v3.5): the English distilled model and its author-provided CTranslate2 checkpoint.
 
-Other forks in the network were reviewed, but not all implementations were merged. Their legacy Llama2 translation stack was not copied. Local translation below is a separate implementation. The desktop GUI shell, lockfile/tooling migrations, sample media, and rename-only changes remain outside this change.
+Other forks in the network were reviewed, but not all implementations were merged. Their legacy Llama2 translation stack was not copied. Local translation and the desktop GUI here are separate implementations. Other forks' GUI shells, lockfile/tooling migrations, sample media, and rename-only changes were not imported.
 
 The local translation implementation uses and credits:
 
@@ -390,8 +540,9 @@ captions. Each completed output is published atomically; failed translation
 does not overwrite existing final subtitles. A completed English intermediate
 remains recoverable if the second translation step fails.
 
-Models and stages live in `%LOCALAPPDATA%\AutoSubtitlePlus`, outside the
-executable directory. Missing files download automatically, are verified, then
+Installed Python editions store models and stages in `%LOCALAPPDATA%\AutoSubtitlePlus`.
+Portable editions instead keep their data beneath `data` beside the EXE, or the
+shared `AUTO_SUBTITLE_PLUS_DATA_DIR` override. Missing files download automatically, are verified, then
 undergo one-time conversion where needed. Partial files are never ready models.
 Ctrl+C cancels the CLI; GUI hosts use the shared cancellation callback/event.
 Cached local translation is reusable offline. There is no runtime `pip`, compiler,
@@ -400,8 +551,9 @@ Ollama, LM Studio, account, public listener or hosted backend.
 Hy-MT2 currently uses Windows x64 llama.cpp `b10840`, pinned CPU/CUDA 12.4
 archives, loopback-only listening and a random per-process authentication key.
 CTranslate2 models use pinned conversion/tokenizer dependencies, restricted
-weight loading and no remote model code. The future executable must package
-those dependencies; a complete GUI executable is not part of this change.
+weight loading and no remote model code. Portable editions acquire those
+dependencies from verified public downloads; llama.cpp helpers are acquired on
+demand for the chosen translation device, not bundled in the release ZIPs.
 
 ### Shared GUI Contract
 
@@ -490,7 +642,9 @@ model loading, translation and process shutdown. All 15 variants passed on CPU
 and CUDA on the reference machine: 30 cases. Real cancellation/reuse checks
 also passed for both managed runtime families. This is not a clean virtual
 machine or an executable-installer certification; those remain release checks
-for the eventual GUI executable.
+for a stable public executable release. See the [portable validation notes](packaging/README.md#validation-and-credits)
+for current lightweight-package evidence; earlier frozen-executable tests and
+minimal-PATH testing are not a clean VM certification.
 
 ## CPU/GPU Examples
 

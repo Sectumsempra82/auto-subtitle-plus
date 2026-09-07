@@ -17,6 +17,7 @@ import zipfile
 
 from .model_manager import (LANGUAGES, ModelFile, cache_root, check_cancel, emit,
                             ensure_model, resolve_model, source_dir, verify_file)
+from . import portable
 
 LLAMA_RELEASE = "b10840"
 _RUNTIME_FILES = {
@@ -49,6 +50,9 @@ def ensure_llama_runtime(device, offline=False, progress=None, cancel=None, cach
     from filelock import FileLock, Timeout
     if sys.platform != "win32":
         raise RuntimeError("The managed Hy-MT2 runtime currently supports Windows x64 only")
+    bundled = portable.bundled_llama_runtime(device, LLAMA_RELEASE)
+    if bundled is not None and _runtime_valid(bundled):
+        return next(bundled.rglob("llama-server.exe"))
     root = cache_root(cache_dir) / "runtimes"
     root.mkdir(parents=True, exist_ok=True)
     directory = root / f"llama-{LLAMA_RELEASE}-{device}"
@@ -148,11 +152,10 @@ class LlamaTranslationEngine:
                 "--api-key", self.session.headers["Authorization"].removeprefix("Bearer "),
                 "--ctx-size", "4096", "--parallel", "1", "--n-gpu-layers", "999" if device == "cuda" else "0",
                 "--jinja", "--no-webui", "--no-warmup"]
-        environment = os.environ.copy()
         # CUDA runtime archives can contain a different folder than the executable.
         runtime_root = executable.parent
         dll_dirs = {str(p.parent) for p in runtime_root.rglob("*.dll")}
-        environment["PATH"] = os.pathsep.join(sorted(dll_dirs)) + os.pathsep + environment.get("PATH", "")
+        environment = portable.sanitized_subprocess_env(sorted(dll_dirs))
         self.process = subprocess.Popen(args, cwd=executable.parent, env=environment,
                                         stdin=subprocess.DEVNULL, stdout=self.log, stderr=self.log,
                                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
