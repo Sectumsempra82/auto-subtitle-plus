@@ -3,3 +3,10 @@ psutil
 deep-translator
 ffmpeg-python
 stable-ts
+torch>=2.6,<3
+ctranslate2==4.8.2
+transformers==4.57.6
+huggingface-hub==0.36.2
+sentencepiece==0.2.1
+sacremoses==0.1.1
+filelock>=3.18,<4

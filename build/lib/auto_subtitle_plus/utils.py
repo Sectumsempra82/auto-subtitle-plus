@@ -1,10 +1,8 @@
 import os
 import re
-import time
 import subprocess
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from deep_translator import GoogleTranslator
 from typing import Any, Iterator, TextIO
+import textwrap
 
 def str2bool(string):
     string = string.lower()
@@ -27,7 +25,7 @@ def format_timestamp(
     milliseconds -= minutes * 60_000
     seconds = milliseconds // 1_000
     milliseconds -= seconds * 1_000
-    hours_marker = f"{hours}:" if always_include_hours or hours > 0 else ""
+    hours_marker = f"{hours:02d}:" if always_include_hours or hours > 0 else ""
     return f"{hours_marker}{minutes:02d}:{seconds:02d}{decimal_marker}{milliseconds:03d}"
 
 def get_segment_value(segment: Any, key: str):
@@ -38,6 +36,10 @@ def get_segment_value(segment: Any, key: str):
 def normalize_segments(transcript: Iterator[dict]):
     if isinstance(transcript, dict):
         return list(transcript["segments"])
+    if hasattr(transcript, "final_cues"):
+        return list(transcript.final_cues)
+    if hasattr(transcript, "source_cues"):
+        return list(transcript.source_cues)
     if hasattr(transcript, "segments"):
         return list(transcript.segments)
     return list(transcript)
@@ -50,68 +52,30 @@ def write_subtitle(
     max_workers: int = 4,
     translate_to: str = "tr",
     translate_off: bool = False,
-    bilingual: bool = False
+    bilingual: bool = False,
+    max_chars_per_line: int = 42,
 ):
-    start_time = time.time()
-
     segments = normalize_segments(transcript)
-    texts = [
-        str(get_segment_value(segment, "text")).strip().replace("-->", "->")
-        for segment in segments
-    ]
     decimal_marker = "," if subtitle_format == "srt" else "."
 
     if subtitle_format == "vtt":
         print("WEBVTT\n", file=file)
 
-    if translate_off:
-        for i, segment in enumerate(segments, start=1):
-            text = str(get_segment_value(segment, "text")).strip().replace("-->", "->")
-            print(
-                f"{i}\n"
-                f"{format_timestamp(get_segment_value(segment, 'start'), always_include_hours=True, decimal_marker=decimal_marker)} --> "
-                f"{format_timestamp(get_segment_value(segment, 'end'), always_include_hours=True, decimal_marker=decimal_marker)}\n"
-                f"{text}\n",
-                file=file,
-                flush=True,
-            )
-    else:
-        translations = [None] * len(texts)
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_index = {
-                executor.submit(
-                    GoogleTranslator(source="auto", target=translate_to).translate_batch,
-                    texts[i:i + batch_size]
-                ): (i, i + batch_size)
-                for i in range(0, len(texts), batch_size)
-            }
+    if not translate_off and translate_to:
+        has_translated_cues = any(get_optional_segment_value(segment, "source_text") for segment in segments)
+        if not has_translated_cues:
+            raise ValueError("write_subtitle only serializes subtitles; translate with TranslationPipeline first")
 
-            for future in as_completed(future_to_index):
-                start_idx, end_idx = future_to_index[future]
-                try:
-                    translations[start_idx:end_idx] = future.result()
-                except Exception as e:
-                    print(f"Translation error: {e}", file=file)
-
-        for i, (segment, translation) in enumerate(zip(segments, translations), start=1):
-            original_text = str(get_segment_value(segment, "text")).strip().replace("-->", "->")
-            translated_text = translation or original_text
-            subtitle_text = (
-                f"{original_text}\n{translated_text}"
-                if bilingual
-                else translated_text
-            )
-            print(
-                f"{i}\n"
-                f"{format_timestamp(get_segment_value(segment, 'start'), always_include_hours=True, decimal_marker=decimal_marker)} --> "
-                f"{format_timestamp(get_segment_value(segment, 'end'), always_include_hours=True, decimal_marker=decimal_marker)}\n"
-                f"{subtitle_text}\n",
-                file=file,
-                flush=True,
-            )
-
-    elapsed_time = time.time() - start_time
-    print(f"Process completed in {int(elapsed_time // 60)}m{int(elapsed_time % 60)}s.")
+    for i, segment in enumerate(segments, start=1):
+        text = format_subtitle_body(segment, bilingual=bilingual, max_chars_per_line=max_chars_per_line)
+        print(
+            f"{i}\n"
+            f"{format_timestamp(get_segment_value(segment, 'start'), always_include_hours=True, decimal_marker=decimal_marker)} --> "
+            f"{format_timestamp(get_segment_value(segment, 'end'), always_include_hours=True, decimal_marker=decimal_marker)}\n"
+            f"{text}\n",
+            file=file,
+            flush=True,
+        )
 
 def write_srt(transcript: Iterator[dict], file: TextIO, **kwargs):
     write_subtitle(transcript, file, subtitle_format="srt", **kwargs)
@@ -119,6 +83,35 @@ def write_srt(transcript: Iterator[dict], file: TextIO, **kwargs):
 def write_txt(transcript: Iterator[dict], file: TextIO):
     for segment in normalize_segments(transcript):
         print(str(get_segment_value(segment, "text")).strip(), file=file)
+
+
+def get_optional_segment_value(segment: Any, key: str):
+    if isinstance(segment, dict):
+        return segment.get(key)
+    return getattr(segment, key, None)
+
+
+def format_subtitle_body(segment: Any, bilingual: bool, max_chars_per_line: int):
+    text = str(get_segment_value(segment, "text")).strip().replace("-->", "->")
+    source_text = get_optional_segment_value(segment, "source_text")
+    blocks = []
+    if bilingual and source_text:
+        blocks.append(str(source_text).strip().replace("-->", "->"))
+    blocks.append(text)
+    return "\n".join(wrap_subtitle_block(block, max_chars_per_line) for block in blocks if block)
+
+
+def wrap_subtitle_block(text: str, max_chars_per_line: int) -> str:
+    lines = []
+    for line in text.splitlines() or [text]:
+        wrapped = textwrap.wrap(
+            line,
+            width=max(1, max_chars_per_line),
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+        lines.extend(wrapped or [""])
+    return "\n".join(lines)
 
 def get_filename(path):
     return os.path.splitext(os.path.basename(path))[0]
