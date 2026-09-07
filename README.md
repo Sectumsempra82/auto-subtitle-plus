@@ -8,8 +8,7 @@ This fork keeps original-language subtitles as the default. Translation only hap
 
 ### Screenshots
 
-Actual desktop UI with example queue filenames; no private media is shown.
-Resource monitoring is paused for these documentation captures.
+Actual desktop UI with example queue filenames.
 
 ![Local-file queue and transcription settings](assets/screenshots/desktop-queue.png)
 
