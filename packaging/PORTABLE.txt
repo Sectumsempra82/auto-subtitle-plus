@@ -1,0 +1,57 @@
+AUTO SUBTITLE PLUS - WINDOWS X64 APP-LOCAL EDITION
+
+Extract the whole ZIP into a writable folder. Keep its files together.
+CLI: auto_subtitle_plus.exe --help
+GUI: double-click auto_subtitle_plus_gui.exe
+
+First run downloads verified dependencies into data, then starts the app.
+CPU is the initial runtime profile. Setup CUDA.cmd explicitly selects the
+larger GPU runtime; Setup CPU.cmd switches back. This changes available
+runtime capabilities, not transcription models or translation routes.
+Models download separately when selected. Internet is needed for missing
+dependencies/models; prepared dependencies and models can be reused offline.
+
+Check Dependencies.cmd verifies installed dependency files. Repair
+Dependencies.cmd rebuilds the selected runtime from verified cached/downloaded
+packages. No runtime pip, compiler, administrator access, global Python, PATH,
+registry changes or automatic system-wide installation. Driver/OS prerequisites
+are never installed silently. Stop and explicitly approve any system installer.
+
+CLI setup options (also accepted by the GUI EXE):
+  --runtime-device cpu|cuda --setup-only
+  --check-dependencies
+  --repair-dependencies --setup-only
+  --offline
+
+data contains downloads, prepared runtimes, models and settings. Preserve it
+on upgrades. AUTO_SUBTITLE_PLUS_DATA_DIR selects a shared writable location.
+Old runtimes and download archives are retained for recovery/offline use.
+To remove a complete runtime/data folder, close both editions first; deleting
+data also deletes its models/settings. Never delete it merely to update code.
+
+Requires Windows 10/11 x64, Windows PowerShell 5.1 and .NET Framework 4.x
+(inbox on supported Windows). NVIDIA CUDA requires a compatible installed
+NVIDIA driver. Unsigned personal build: SmartScreen may warn. Do not disable
+antivirus or system-wide protections. Clean-Windows certification is pending.
+
+CREDITS AND LICENSES
+PROJECT-README.md contains all project/fork/model credits. The dependency
+catalog records pinned versions, public URLs, sizes, SHA256 and license notices.
+Public wheels retain upstream license files in data/runtimes/.../site.
+Whisper and Stable-TS are bundled as build-time wheels because their pinned
+releases have no compatible published wheels. Their source provenance is in
+dependencies-windows.json; their licenses are included inside the wheels.
+
+Python: https://www.python.org (PSF)
+Python Packaging Authority installer: https://github.com/pypa/installer (MIT)
+PyTorch: https://pytorch.org (BSD-3-Clause and third-party notices)
+Qt/PySide6: https://www.qt.io/licensing/open-source-lgpl-obligations
+FFmpeg: https://ffmpeg.org/legal.html
+Gyan Windows builds: https://www.gyan.dev/ffmpeg/builds/ (GPL-enabled build)
+llama.cpp: https://github.com/ggml-org/llama.cpp (MIT)
+NVIDIA CUDA/cuDNN: downloaded package license terms apply.
+
+This app downloads official archives instead of redistributing their binaries.
+If republishing a prepared data folder, review GPL corresponding-source,
+Qt/LGPL replacement/relinking and NVIDIA redistribution obligations first.
+Downloading upstream binaries does not remove their license conditions.

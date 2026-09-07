@@ -1,0 +1,864 @@
+[
+  {
+    "repo_id": "tencent/Hy-MT2-1.8B-GGUF",
+    "revision": "1cd5208700acedef4ef93019b6cfc148b8522d45",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "Hy-MT2-1.8B-Q4_K_M.gguf",
+        "size": 1133080448,
+        "sha256": "dc5f44fcf1fa496ee7ad725982c0c8c553a4de00259b53af84c4b89fb0c06699",
+        "git_blob": "00e8057bd6292f53364e66b47005abca55f7d448"
+      },
+      {
+        "name": "Hy-MT2-1.8B-Q8_0.gguf",
+        "size": 1908528192,
+        "sha256": "5c3fe0b1408a5ceb0143184ef247b11b579c525f4b02b060e6c851bb76fef1a4",
+        "git_blob": "8a52ee960bb0b08c9b5da11379c44eb95b929e5e"
+      },
+      {
+        "name": "LICENSE.txt",
+        "size": 11639,
+        "sha256": null,
+        "git_blob": "271c97261848d7b61366d20262762f5c47b4a0c6"
+      },
+      {
+        "name": "README.md",
+        "size": 15278,
+        "sha256": null,
+        "git_blob": "d77375c749b802077ddc949410f285ae13688045"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero2_no_offload.json",
+        "size": 528,
+        "sha256": null,
+        "git_blob": "52b23eddcc6c37b8a0a11cb19fdca304d7cbbe62"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero2_offload.json",
+        "size": 676,
+        "sha256": null,
+        "git_blob": "66cdc3b7ea8dc960e6a7475a41e031ce579fa2dc"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_no_offload.json",
+        "size": 1100,
+        "sha256": null,
+        "git_blob": "a5829f571a73712bee4e7b4b07870e064cbc9224"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_offload.json",
+        "size": 1099,
+        "sha256": null,
+        "git_blob": "297ea2a9494334889e082268b3ddb3b35fb7032b"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_offload_no_auto.json",
+        "size": 944,
+        "sha256": null,
+        "git_blob": "001ce516c22d7c110ccaed9d580f216350f74f6e"
+      },
+      {
+        "name": "train/llama_factory_support/dataset_info.json",
+        "size": 974,
+        "sha256": null,
+        "git_blob": "f81446afa4cd5f01845dc6528a2168e5a2533235"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero2_offload.json",
+        "size": 892,
+        "sha256": null,
+        "git_blob": "adcfcf3756f94369c77936738a3d3b713a38c520"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero2_offload_lora.json",
+        "size": 795,
+        "sha256": null,
+        "git_blob": "2b61a7ff70412f36aacd1f7f7eb1cf200aa3b107"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero3_offload.json",
+        "size": 954,
+        "sha256": null,
+        "git_blob": "aba5169673b4b35cbef5f7437e16b668227a9235"
+      }
+    ]
+  },
+  {
+    "repo_id": "tencent/Hy-MT2-7B-GGUF",
+    "revision": "ab8472660ac61fac25f1af43fac2599d52a8a775",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "HY-MT2-7B-Q8_0.gguf",
+        "size": 7981928896,
+        "sha256": "58b3ad55dd6f6fa08c695cddc34fb5f8f708a844f78ae10508071914b0ed67c0",
+        "git_blob": "d84b9bc39fae0d067b548b3fd15a4b48ce04ecb9"
+      },
+      {
+        "name": "Hy-MT2-7B-Q4_K_M.gguf",
+        "size": 4624648896,
+        "sha256": "9f96256500f3fc1ab4d64336b58f52a949a95ad7516b0c229476eef782f9f77b",
+        "git_blob": "58fdbf55d3e3f8fda11ba00193cf17e1cd0fbdd0"
+      },
+      {
+        "name": "LICENSE.txt",
+        "size": 11635,
+        "sha256": null,
+        "git_blob": "9643eb3b361ec7e9a14703122d6988693df4be87"
+      },
+      {
+        "name": "README.md",
+        "size": 15276,
+        "sha256": null,
+        "git_blob": "ecedb4859e1e1682594d366e629f1b469c69e7bf"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero2_no_offload.json",
+        "size": 528,
+        "sha256": null,
+        "git_blob": "52b23eddcc6c37b8a0a11cb19fdca304d7cbbe62"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero2_offload.json",
+        "size": 676,
+        "sha256": null,
+        "git_blob": "66cdc3b7ea8dc960e6a7475a41e031ce579fa2dc"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_no_offload.json",
+        "size": 1100,
+        "sha256": null,
+        "git_blob": "a5829f571a73712bee4e7b4b07870e064cbc9224"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_offload.json",
+        "size": 1099,
+        "sha256": null,
+        "git_blob": "297ea2a9494334889e082268b3ddb3b35fb7032b"
+      },
+      {
+        "name": "train/deepspeed_support/ds_zero3_offload_no_auto.json",
+        "size": 944,
+        "sha256": null,
+        "git_blob": "001ce516c22d7c110ccaed9d580f216350f74f6e"
+      },
+      {
+        "name": "train/llama_factory_support/dataset_info.json",
+        "size": 974,
+        "sha256": null,
+        "git_blob": "f81446afa4cd5f01845dc6528a2168e5a2533235"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero2_offload.json",
+        "size": 892,
+        "sha256": null,
+        "git_blob": "adcfcf3756f94369c77936738a3d3b713a38c520"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero2_offload_lora.json",
+        "size": 795,
+        "sha256": null,
+        "git_blob": "2b61a7ff70412f36aacd1f7f7eb1cf200aa3b107"
+      },
+      {
+        "name": "train/llama_factory_support/ds_zero3_offload.json",
+        "size": 954,
+        "sha256": null,
+        "git_blob": "aba5169673b4b35cbef5f7437e16b668227a9235"
+      }
+    ]
+  },
+  {
+    "repo_id": "facebook/m2m100_418M",
+    "revision": "55c2e61bbf05dfb8d7abccdc3fae6fc8512fd636",
+    "license": "mit",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 4603,
+        "sha256": null,
+        "git_blob": "98b99edb1de68441bb0c87a9645c8f2e35ea34d0"
+      },
+      {
+        "name": "config.json",
+        "size": 908,
+        "sha256": null,
+        "git_blob": "93359f73052bad5dc918b1d53c1c75e89fd6a257"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 233,
+        "sha256": null,
+        "git_blob": "ba941101cd3e90b113db16712f4a20372268e767"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 1935796948,
+        "sha256": "d907ea45e4e4b9db163382a6674f6218b3c59566fe06d77f4055c208b4e87ed1",
+        "git_blob": "797860cda83940c2341be4a4986ff0c9684c4037"
+      },
+      {
+        "name": "sentencepiece.bpe.model",
+        "size": 2423393,
+        "sha256": "d8f7c76ed2a5e0822be39f0a4f95a55eb19c78f4593ce609e2edbc2aea4d380a",
+        "git_blob": "742688c85a5bef9e7b79b4861bf5f9e41a86dea3"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 1140,
+        "sha256": null,
+        "git_blob": "c6c3195f9bb7856df9a3fdd0252bcf99ff209f5d"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 298,
+        "sha256": null,
+        "git_blob": "c0acb40bd22d2a992d273bb6a2b1c99c37613e4f"
+      },
+      {
+        "name": "vocab.json",
+        "size": 3708092,
+        "sha256": null,
+        "git_blob": "380e263bf4efc45fa72251fb19336a9593307bc4"
+      }
+    ]
+  },
+  {
+    "repo_id": "facebook/nllb-200-distilled-600M",
+    "revision": "f8d333a098d19b4fd9a8b18f94170487ad3f821d",
+    "license": "cc-by-nc-4.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 7667,
+        "sha256": null,
+        "git_blob": "489890f6973db2448e698120b132fc8e2fcfb304"
+      },
+      {
+        "name": "config.json",
+        "size": 846,
+        "sha256": null,
+        "git_blob": "91ba54326eccfdb17a06a7d110df3d71f39b84b8"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 189,
+        "sha256": null,
+        "git_blob": "4c6d168201607a22255bee55a6ed092b0e3ed7a1"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 2460457927,
+        "sha256": "c266c2cfd19758b6d09c1fc31ecdf1e485509035f6b51dfe84f1ada83eefcc42",
+        "git_blob": "15c5444708dfbbcf4666bf483e7c6e22bbb2852d"
+      },
+      {
+        "name": "sentencepiece.bpe.model",
+        "size": 4852054,
+        "sha256": "14bb8dfb35c0ffdea7bc01e56cea38b9e3d5efcdcb9c251d6b40538e1aab555a",
+        "git_blob": "dc2262d3e1d375b235eb71c24119c8e73f85d4ad"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 3548,
+        "sha256": null,
+        "git_blob": "02fba84e401dd2017999a39cac2c1278591c3a03"
+      },
+      {
+        "name": "tokenizer.json",
+        "size": 17331176,
+        "sha256": "e316b82de11d0f951f370943b3c438311629547285129b0b81dadabd01bca665",
+        "git_blob": "c91ed1bb9994f98ddde1204a58cc5f7c5bd386f9"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 564,
+        "sha256": null,
+        "git_blob": "742aa330eae62f661fe28ff3fdd1d216d1481294"
+      }
+    ]
+  },
+  {
+    "repo_id": "facebook/nllb-200-distilled-1.3B",
+    "revision": "7be3e24664b38ce1cac29b8aeed6911aa0cf0576",
+    "license": "cc-by-nc-4.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 7653,
+        "sha256": null,
+        "git_blob": "70cdd10e467d07f6c47995bbf71ded8ae67162ea"
+      },
+      {
+        "name": "config.json",
+        "size": 808,
+        "sha256": null,
+        "git_blob": "5933e93fc5ec6b7e62b2d6dc224fcd7a656a1da6"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 189,
+        "sha256": null,
+        "git_blob": "4c6d168201607a22255bee55a6ed092b0e3ed7a1"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 5482882236,
+        "sha256": "7e40f838a5aad3d60e9254632ab876bda44340386ca7ebad3e099db7432b04e1",
+        "git_blob": "95c8bd49fc6882282df4c148266f6de5b5cf85a3"
+      },
+      {
+        "name": "sentencepiece.bpe.model",
+        "size": 4852054,
+        "sha256": "14bb8dfb35c0ffdea7bc01e56cea38b9e3d5efcdcb9c251d6b40538e1aab555a",
+        "git_blob": "dc2262d3e1d375b235eb71c24119c8e73f85d4ad"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 3548,
+        "sha256": null,
+        "git_blob": "02fba84e401dd2017999a39cac2c1278591c3a03"
+      },
+      {
+        "name": "tokenizer.json",
+        "size": 17331176,
+        "sha256": "e316b82de11d0f951f370943b3c438311629547285129b0b81dadabd01bca665",
+        "git_blob": "c91ed1bb9994f98ddde1204a58cc5f7c5bd386f9"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 564,
+        "sha256": null,
+        "git_blob": "742aa330eae62f661fe28ff3fdd1d216d1481294"
+      }
+    ]
+  },
+  {
+    "repo_id": "google/madlad400-3b-mt",
+    "revision": "fa184c675da0b5c9e1c8694fccd4e12e2d422094",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 9666,
+        "sha256": null,
+        "git_blob": "84e2e5f6294c6a4394b9ad57e84e67510f6df61a"
+      },
+      {
+        "name": "added_tokens.json",
+        "size": 4,
+        "sha256": null,
+        "git_blob": "2c63c0851048d8f7bff41ecf0f8cee05f52fd120"
+      },
+      {
+        "name": "config.json",
+        "size": 749,
+        "sha256": null,
+        "git_blob": "11c12599ab543aec9dca774479345e610b24a60a"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 142,
+        "sha256": null,
+        "git_blob": "4db68fbe44f5aa4ffaec1084f61b7c34a266ca29"
+      },
+      {
+        "name": "model.safetensors",
+        "size": 11761587872,
+        "sha256": "66ff5f8fcaf92291da486fdfbd4d5233cec90e1359348a56e3172c978b3a76d4",
+        "git_blob": "8852e3738854411d4be03a7538684f33426df02b"
+      },
+      {
+        "name": "special_tokens_map.json",
+        "size": 414,
+        "sha256": null,
+        "git_blob": "71b5faae21b2a2fa97fe8b8600896c6ea384cb83"
+      },
+      {
+        "name": "spiece.model",
+        "size": 4427844,
+        "sha256": "ef11ac9a22c7503492f56d48dce53be20e339b63605983e9f27d2cd0e0f3922c",
+        "git_blob": "472d7b8055193de7163f9e5afab3e31e9b4bb8d2"
+      },
+      {
+        "name": "tokenizer.json",
+        "size": 16629031,
+        "sha256": "a2799ccc696b752ba00c34f58726bfe253a04921ceb6cfc620400f560474790b",
+        "git_blob": "3c508346c7b90859ce2ca2d35fa46f2700a29cc8"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 830,
+        "sha256": null,
+        "git_blob": "32a59948c96779a5ca17f0874097306c4c5b2275"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-en-it",
+    "revision": "be5a254d936f1a8c8da080406ca582a6615e6658",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 895,
+        "sha256": null,
+        "git_blob": "7b36bd630c620c3ff751d39181a3c766181e500b"
+      },
+      {
+        "name": "config.json",
+        "size": 1381,
+        "sha256": null,
+        "git_blob": "357e2a3309ea1f2f00672cbcbffb37d84b957d02"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "f36cbff2c9209725124cc57e47f54f5172f03e80"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 342936789,
+        "sha256": "1decb91168d69a3018363d61bc7130155a2821f949e74a40b66788b5bc07d7d1",
+        "git_blob": "47bdebcb2b3ee1ce78afff884c87fc39567f0367"
+      },
+      {
+        "name": "source.spm",
+        "size": 789468,
+        "sha256": null,
+        "git_blob": "219b146e0c09ea818d574ca669819a3b06a6077f"
+      },
+      {
+        "name": "target.spm",
+        "size": 813725,
+        "sha256": null,
+        "git_blob": "760d8c46def0ffcd4979919b154d1b55cfd18a25"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "bb92aa4c240f1a470df59f177b5fbac818886465"
+      },
+      {
+        "name": "vocab.json",
+        "size": 2351575,
+        "sha256": null,
+        "git_blob": "58f5353f3414392f0e0476dab6e4f9d596f9cb6e"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-it-en",
+    "revision": "42556a0848fc726f4d27399f20b19ff6f01afe11",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 901,
+        "sha256": null,
+        "git_blob": "87e484ee700b1137e2d2353649b5eb6d514f7df3"
+      },
+      {
+        "name": "config.json",
+        "size": 1381,
+        "sha256": null,
+        "git_blob": "0b2a697183be5b2e2847f25cb9459bc9e104a082"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "fbaa060c3dfdd8c51368738840559dcd76f5597b"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 343642677,
+        "sha256": "7b16287e467858b369c477d39498427197500a6b477e3d76c2fbcc54d915d8f3",
+        "git_blob": "dc5f83a66f7090f062f88ecb98cdafbee3c41beb"
+      },
+      {
+        "name": "source.spm",
+        "size": 813709,
+        "sha256": null,
+        "git_blob": "63f2d0839d7c24ff7fda90a27bf5abd59a1c4df6"
+      },
+      {
+        "name": "target.spm",
+        "size": 789549,
+        "sha256": null,
+        "git_blob": "2bf09de715e7d0a627fb9e11ca89b1d2839f1411"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "7a6ac67b1a1d4b9aba6240feda1236c766ca8135"
+      },
+      {
+        "name": "vocab.json",
+        "size": 2369833,
+        "sha256": null,
+        "git_blob": "853edcc2746b36e0a4a56947d22d013184400b0a"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-en-fr",
+    "revision": "dd7f6540a7a48a7f4db59e5c0b9c42c8eea67f18",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 1209,
+        "sha256": null,
+        "git_blob": "fad8f6c7b5c67443512b804362f2824c6afc21bb"
+      },
+      {
+        "name": "config.json",
+        "size": 1416,
+        "sha256": null,
+        "git_blob": "1ca77a4a9305ea071d96dd12dbe7c69c3a224f8e"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "a76623f9e228ce241586c6dc0ede54b9674940a6"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 300827685,
+        "sha256": "cc1de10b49342ad2f33e06bc4474ddd6eaca278474903c4a8636ce15680d64de",
+        "git_blob": "396bf4eb15e01fa5193edcf1e0af5eed70032954"
+      },
+      {
+        "name": "source.spm",
+        "size": 778395,
+        "sha256": null,
+        "git_blob": "5b989d2ad3cc6596bef819b2ad755f3e06377476"
+      },
+      {
+        "name": "target.spm",
+        "size": 802397,
+        "sha256": null,
+        "git_blob": "e95b99a0e1a115d0f27eb051c7afc5a2859f1630"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "599f1c74f7e68d1351c801ef3557a03fd846d171"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1339166,
+        "sha256": null,
+        "git_blob": "f12d2f5f9cddfc4b05dee175269d98cab8274c12"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-fr-en",
+    "revision": "c4aed37b318c763fd177aa449b44e3b783cc6c02",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 1250,
+        "sha256": null,
+        "git_blob": "f0f11f00680adb17493b4826ad6804191bfd22ed"
+      },
+      {
+        "name": "config.json",
+        "size": 1416,
+        "sha256": null,
+        "git_blob": "e0e6fcaff8387b6648835ff3e326d5bc31b6e7bc"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "a76623f9e228ce241586c6dc0ede54b9674940a6"
+      },
+      {
+        "name": "model.safetensors",
+        "size": 300803608,
+        "sha256": "6e3837f34b903802c3d0d670362b997cee6e87584a1108eb3fa89e4625e4424a",
+        "git_blob": "8650c3da1444f36426b5f2cf747841f5d3843658"
+      },
+      {
+        "name": "source.spm",
+        "size": 802397,
+        "sha256": null,
+        "git_blob": "e95b99a0e1a115d0f27eb051c7afc5a2859f1630"
+      },
+      {
+        "name": "target.spm",
+        "size": 778395,
+        "sha256": null,
+        "git_blob": "5b989d2ad3cc6596bef819b2ad755f3e06377476"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "f760e5a21202d4bd42837aa777bcd2e9ee7eaffa"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1339166,
+        "sha256": null,
+        "git_blob": "f12d2f5f9cddfc4b05dee175269d98cab8274c12"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-en-es",
+    "revision": "5bc4493d463cf000c1f0b50f8d56886a392ed4ab",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 2401,
+        "sha256": null,
+        "git_blob": "9135c92118ca40a565e7a617a2ae23153f651cfd"
+      },
+      {
+        "name": "config.json",
+        "size": 1473,
+        "sha256": null,
+        "git_blob": "c40dc3af1603bdbca3388970914022f4abb81f7f"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "f07859fcab98712b231d115475990a962eebc851"
+      },
+      {
+        "name": "metadata.json",
+        "size": 1090,
+        "sha256": null,
+        "git_blob": "de076dab7a94370a188886a0553ff3b1717eb8f7"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 312087523,
+        "sha256": "befce0f620e8e63f83bbb7f0818eb51d541cba28057a7cc14b00466d85c4994c",
+        "git_blob": "743cd75486a76eae532e12d4ddec5ee71e881ba4"
+      },
+      {
+        "name": "source.spm",
+        "size": 801636,
+        "sha256": null,
+        "git_blob": "6dc92ba66940f622779f82c376066c2c46bbad12"
+      },
+      {
+        "name": "target.spm",
+        "size": 825924,
+        "sha256": null,
+        "git_blob": "2dfb31564bc31c8fbc65c8bfa8cc201fbbf45e44"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 44,
+        "sha256": null,
+        "git_blob": "159d739c93118ec73b1a90a6045b636928fcce95"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1590040,
+        "sha256": null,
+        "git_blob": "d2c5a0f1ab2bb3a752894b854150c358f8c682f9"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-es-en",
+    "revision": "c96e2c5399ebfae4fc43d9669556b9afa74bb69d",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 2427,
+        "sha256": null,
+        "git_blob": "79220174aef949d659cf27ce866ed7541c470779"
+      },
+      {
+        "name": "config.json",
+        "size": 1438,
+        "sha256": null,
+        "git_blob": "03e24f5988fe1a2b9bcf9f3bbebc9bc3b4e2ac1a"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "f07859fcab98712b231d115475990a962eebc851"
+      },
+      {
+        "name": "metadata.json",
+        "size": 1090,
+        "sha256": null,
+        "git_blob": "e0993f2fcafec0e6632b8fb9f38e2ecbb9884b41"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 312087523,
+        "sha256": "586a4e69e0804459ac7c176a5dc76852652100d9af1ee0db796de719899a5deb",
+        "git_blob": "ec3f1760528c457d2959447b737db4e3729c2fbe"
+      },
+      {
+        "name": "source.spm",
+        "size": 825924,
+        "sha256": null,
+        "git_blob": "2dfb31564bc31c8fbc65c8bfa8cc201fbbf45e44"
+      },
+      {
+        "name": "target.spm",
+        "size": 801636,
+        "sha256": null,
+        "git_blob": "6dc92ba66940f622779f82c376066c2c46bbad12"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 44,
+        "sha256": null,
+        "git_blob": "8325c8e127f51a74de059c5db69becaf36971327"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1590040,
+        "sha256": null,
+        "git_blob": "d2c5a0f1ab2bb3a752894b854150c358f8c682f9"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-en-de",
+    "revision": "6183067f769a302e3861815543b9f312c71b0ca4",
+    "license": "cc-by-4.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 3312,
+        "sha256": null,
+        "git_blob": "924fcbf5dd77fe2ba8de011a5d4a5172ad5443ff"
+      },
+      {
+        "name": "config.json",
+        "size": 1335,
+        "sha256": null,
+        "git_blob": "0a49d3f4024d5ea51560d51f29d75722d794fb16"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "3d05a5bad924f2121cf5a006b36dfda02970289b"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 297928209,
+        "sha256": "da068344b1b0c20e6d4a8f77f48e06646b90d679029006b18579e68977206bdd",
+        "git_blob": "a30060b112529b126b8781ec8277c5c1dee064a2"
+      },
+      {
+        "name": "source.spm",
+        "size": 768489,
+        "sha256": null,
+        "git_blob": "e73d58f99c702eb1746e3dc55bc76255d7aa4a94"
+      },
+      {
+        "name": "target.spm",
+        "size": 796845,
+        "sha256": null,
+        "git_blob": "9dd0d88081be8d75fbc029762329cc11bfad07b9"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "c1fe32f77a961c887ae8266fbd92f4f583fe309a"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1273232,
+        "sha256": null,
+        "git_blob": "0da41bcf74fa9a6af4855c7350e27819796d9ca9"
+      }
+    ]
+  },
+  {
+    "repo_id": "Helsinki-NLP/opus-mt-de-en",
+    "revision": "1a922f3b32a8e809e17a47d4b32142d8105924e5",
+    "license": "apache-2.0",
+    "gated": false,
+    "files": [
+      {
+        "name": "README.md",
+        "size": 1372,
+        "sha256": null,
+        "git_blob": "ec8135d74c5de4421e00ffcf4dee73f5d09d0554"
+      },
+      {
+        "name": "config.json",
+        "size": 1381,
+        "sha256": null,
+        "git_blob": "7417e176589d903bb57420c5546287d810941afb"
+      },
+      {
+        "name": "generation_config.json",
+        "size": 293,
+        "sha256": null,
+        "git_blob": "3d05a5bad924f2121cf5a006b36dfda02970289b"
+      },
+      {
+        "name": "pytorch_model.bin",
+        "size": 297928209,
+        "sha256": "e743c3070f61f477cb62fe95ef2c9be2e77f3e488cb6b8030ff8a19e8295c87d",
+        "git_blob": "2337c76518473450baf92f2f778ac4179170fdbf"
+      },
+      {
+        "name": "source.spm",
+        "size": 796845,
+        "sha256": null,
+        "git_blob": "9dd0d88081be8d75fbc029762329cc11bfad07b9"
+      },
+      {
+        "name": "target.spm",
+        "size": 768489,
+        "sha256": null,
+        "git_blob": "e73d58f99c702eb1746e3dc55bc76255d7aa4a94"
+      },
+      {
+        "name": "tokenizer_config.json",
+        "size": 42,
+        "sha256": null,
+        "git_blob": "6dafd08e4b7bed18a02878f5384793168a8d079c"
+      },
+      {
+        "name": "vocab.json",
+        "size": 1273232,
+        "sha256": null,
+        "git_blob": "0da41bcf74fa9a6af4855c7350e27819796d9ca9"
+      }
+    ]
+  }
+]

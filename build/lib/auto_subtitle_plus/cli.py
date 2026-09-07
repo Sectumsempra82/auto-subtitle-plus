@@ -1,31 +1,137 @@
-import os
-import glob
-import psutil
-import ffmpeg
-import whisper
-import stable_whisper
+from __future__ import annotations
+
 import argparse
-import warnings
-import tempfile
+import contextlib
+import glob
+import json
 import multiprocessing
-from torch.cuda import is_available
-from .utils import (
-    ffmpeg_extract_audio,
-    get_filename,
-    is_audio,
-    run_ffmpeg_with_progress,
-    write_subtitle,
-    write_txt,
+import os
+import sys
+import threading
+import warnings
+
+import psutil
+
+from . import processing as _processing
+from .backends import (
+    BACKENDS,
+    asr_backend_fingerprint,
+    format_backend_error,
+    positive_int,
+    print_backend_models,
+    validate_backend_options,
 )
+from .processing import (
+    arg_value,
+    cache_source_transcript,
+    close_asr_model,
+    close_translation_runtime,
+    create_subtitled_videos,
+    default_cache_dir,
+    default_device,
+    ffmpeg_extract_audio,
+    generate_source_transcripts,
+    generate_subtitles,
+    generate_subtitles_from_sources,
+    is_audio,
+    is_english,
+    load_backend_model,
+    output_cues_for_source,
+    parse_glossary,
+    print_translation_models,
+    print_translation_progress,
+    print_translation_selection,
+    print_translation_warnings,
+    read_cached_source,
+    run_ffmpeg_with_progress,
+    run_transcription_worker,
+    source_cache_key,
+    source_cues_from_transcript,
+    source_worker_args,
+    subtitle_layout_is_adaptive,
+    validate_translation_options,
+    write_source_exports,
+    write_subtitle,
+    write_subtitle_atomic,
+    write_txt_atomic,
+)
+from .translation_pipeline import TranslationPipeline, clear_translation_cache
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 
+def extract_audio_worker(input_path, output_path):
+    return _processing.extract_audio_worker(input_path, output_path)
+
+
+def get_audio(paths, save_audio, output_dir, num_workers, context=None):
+    return _processing.get_audio(paths, save_audio, output_dir, num_workers, context)
+
+
+def source_stage_settings(args):
+    return _processing.source_stage_settings(args)
+
+
+def cacheable_source_stage_settings(args):
+    return _processing.cacheable_source_stage_settings(args)
+
+
 def main():
+    parser = build_parser()
+    args = parser.parse_args()
+
+    if args.clear_translation_cache:
+        clear_translation_cache(args.translation_cache_dir)
+        print(f"Translation cache cleared: {os.path.abspath(args.translation_cache_dir or default_cache_dir())}")
+        return 0
+
+    if args.list_translation_models:
+        try:
+            print_translation_models(args)
+        except Exception as error:
+            print(f"Translation model listing failed: {error}")
+            return 1
+        return 0
+
+    if args.list_models:
+        try:
+            print_backend_models(args.backend)
+        except Exception as error:
+            print(format_backend_error(error))
+            return 1
+        return 0
+
+    try:
+        validate_backend_options(args, parser)
+        validate_translation_options(args, parser)
+        args.glossary = parse_glossary(args.glossary)
+    except ValueError as error:
+        parser.error(str(error))
+
+    json_stream = sys.stdout
+    human_print = stderr_print if args.progress_json else print
+    resource_stream = json_stream if args.progress_json else sys.stderr
+    monitor = ResourceSummaryPrinter(args.resources, args.output_dir, stream=resource_stream)
+    monitor.start()
+    try:
+        if args.progress_json:
+            with contextlib.redirect_stdout(sys.stderr):
+                result = _processing.run_job(args, progress=cli_progress(True, json_stream), stdout=human_print)
+        else:
+            result = _processing.run_job(args, progress=None, stdout=human_print)
+    finally:
+        monitor.stop()
+
+    if result.error:
+        human_print(result.error)
+    return 0 if result.status == "completed" else 1
+
+
+def build_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
         description="Auto Subtitle Plus - Automatically generate and translate subtitles for video/audio files",
-        epilog='''Examples:
+        epilog="""Examples:
   Basic usage:
     auto_subtitle_plus video.mp4 --output-video
 
@@ -42,252 +148,121 @@ def main():
     auto_subtitle_plus audio.mp3 audio.ogg --output-srt
 
   Use large model with GPU:
-    auto_subtitle_plus video.mp4 --model large --device cuda'''
+    auto_subtitle_plus video.mp4 --model large --device cuda""",
     )
 
-    # Core arguments
-    parser.add_argument("paths", nargs="+", help="Input file paths or wildcards (e.g., *.mp4)")
+    parser.add_argument("paths", nargs="*", help="Input file paths or wildcards (e.g., *.mp4)")
+    parser.add_argument("--backend", default="stable", choices=BACKENDS, help="Transcription backend (default: %(default)s)")
+    parser.add_argument("--list-models", action="store_true", help="List models for the selected backend and exit without loading a model")
+    parser.add_argument("--list-translation-models", action="store_true", help="List local translation models for the selected translation route and exit")
+    parser.add_argument("-m", "--model", default="small", help="whisper model to use (default: %(default)s)")
+    parser.add_argument("-o", "--output-dir", default=os.getcwd(), help="Output directory (default: current directory)")
 
-    # Model and output options
-    parser.add_argument("-m", "--model",
-                       default="small",
-                       choices=whisper.available_models(),
-                       help="whisper model to use (default: %(default)s)")
+    output_group = parser.add_argument_group("Output Options")
+    output_group.add_argument("-s", "--output-srt", action="store_true", help="Generate SRT subtitle file")
+    output_group.add_argument("-a", "--output-audio", action="store_true", help="Save extracted audio file")
+    output_group.add_argument("-v", "--output-video", action="store_true", help="Generate video with embedded subtitles")
+    output_group.add_argument("--subtitle-format", choices=("srt", "vtt"), default="srt", help="Subtitle file format (default: %(default)s)")
+    output_group.add_argument("--output-txt", action="store_true", help="Also save final text (translated when --translate-to is used)")
+    output_group.add_argument("--output-mkv", action="store_true", help="When outputting video, mux subtitles as a soft track in an MKV container")
+    output_group.add_argument("--no-overwrite", dest="overwrite", action="store_false", default=True, help="Fail when an output file already exists")
 
-    parser.add_argument("-o", "--output-dir",
-                       default=os.getcwd(),
-                       help="Output directory (default: current directory)")
+    lang_group = parser.add_argument_group("Language Options")
+    lang_group.add_argument("--language", type=str, default=None, help="Force audio language (e.g., en, fr, tr)")
+    lang_group.add_argument("--translate-off", action="store_true", help="Deprecated; original-language subtitles are now the default")
+    lang_group.add_argument("--translate-to", default=None, help="Target language for translation (e.g., it, fr, es, de, pt)")
+    lang_group.add_argument("--translation-backend", "--translation-engine", choices=("local", "google"), dest="translation_engine", default="local", help="Translation engine. Local is default; Google is explicit network translation")
+    lang_group.add_argument("--translation-route", choices=("direct", "via-en"), default="direct", help="Translation route. via-en explicitly translates source -> English -> target")
+    lang_group.add_argument("--translation-model", default=None, help="Local translation model id or family alias, for example opus-mt")
+    lang_group.add_argument("--translation-device", choices=("auto", "cpu", "cuda"), default="auto", help="Local translation device (default: %(default)s)")
+    lang_group.add_argument("--translation-cache-dir", default=None, help="Translation cache directory (default: LocalAppData AutoSubtitlePlus cache)")
+    lang_group.add_argument("--retry-translation", action="store_true", help="Reuse a cached source transcript and retry only translation/output stages")
+    lang_group.add_argument("--clear-translation-cache", action="store_true", help="Clear cached source and translation stages, then exit")
+    lang_group.add_argument("--offline", action="store_true", help="Forbid ASR and translation model downloads")
+    lang_group.add_argument("--bilingual", action="store_true", help="When translating, include original text above translated text")
+    lang_group.add_argument("--output-source-subtitles", "--save-original", dest="output_source_subtitles", action="store_true", help="When translating, also write name.source.<lang>.<format>")
+    lang_group.add_argument("--output-intermediate-subtitles", "--save-intermediate", dest="output_intermediate_subtitles", action="store_true", help="When using via-en, also write name.intermediate.en.<format>")
+    lang_group.add_argument("--subtitle-layout", choices=("adaptive", "preserve"), default="adaptive", help="Translated subtitle layout (default: %(default)s)")
+    lang_group.add_argument("--no-adaptive-layout", action="store_true", help="Disable adaptive translated subtitle layout")
+    lang_group.add_argument("--context", default="", help="Context passed to supported translation models")
+    lang_group.add_argument("--glossary", default=None, help="JSON object or JSON file path with source term to target term mappings")
 
-    # Output controls
-    output_group = parser.add_argument_group('Output Options')
-    output_group.add_argument("-s", "--output-srt",
-                             action="store_true",
-                             help="Generate SRT subtitle file")
-    output_group.add_argument("-a", "--output-audio",
-                             action="store_true",
-                             help="Save extracted audio file")
-    output_group.add_argument("-v", "--output-video",
-                             action="store_true",
-                             help="Generate video with embedded subtitles")
-    output_group.add_argument("--subtitle-format",
-                             choices=("srt", "vtt"),
-                             default="srt",
-                             help="Subtitle file format (default: %(default)s)")
-    output_group.add_argument("--output-txt",
-                             action="store_true",
-                             help="Also save a plain text transcript")
-    output_group.add_argument("--output-mkv",
-                             action="store_true",
-                             help="When outputting video, mux subtitles as a soft track in an MKV container")
+    layout_group = parser.add_argument_group("Layout Options")
+    layout_group.add_argument("--max-chars-per-line", type=positive_int, default=42, help="Maximum subtitle characters per rendered line")
+    layout_group.add_argument("--max-lines", type=positive_int, default=2, help="Maximum rendered subtitle lines")
+    layout_group.add_argument("--max-cps", type=float, default=17.0, help="Maximum target characters per second")
+    layout_group.add_argument("--min-duration", type=float, default=1.0, help="Minimum target subtitle duration")
+    layout_group.add_argument("--max-duration", type=float, default=7.0, help="Maximum target subtitle duration")
 
-    # Language and translation
-    lang_group = parser.add_argument_group('Language Options')
-    lang_group.add_argument("--language",
-                           type=str,
-                           default=None,
-                           help="Force audio language (e.g., en, fr, tr)")
-    lang_group.add_argument("--translate-off",
-                           action="store_true",
-                           help="Deprecated; original-language subtitles are now the default")
-    lang_group.add_argument("--translate-to",
-                           default=None,
-                           help="Target language for translation (e.g., tr, fr)")
-    lang_group.add_argument("--bilingual",
-                           action="store_true",
-                           help="When translating, include original text above translated text")
+    perf_group = parser.add_argument_group("Performance Options")
+    perf_group.add_argument("--batch-size", type=int, default=10, help="Legacy compatibility option; local translation uses token-budget units")
+    perf_group.add_argument("--max-workers", type=int, default=4, help="Legacy compatibility option; local translator jobs are sequential")
+    perf_group.add_argument("--extract-workers", type=positive_int, default=max(1, (psutil.cpu_count(logical=False) or 2) // 2), help="Audio extraction workers (default: half of CPU cores)")
 
-    # Performance settings
-    perf_group = parser.add_argument_group('Performance Options')
-    perf_group.add_argument("--batch-size",
-                           type=int,
-                           default=10,
-                           help="Segments per translation batch (default: %(default)s)")
-    perf_group.add_argument("--max-workers",
-                           type=int,
-                           default=4,
-                           help="Max parallel translation threads (default: %(default)s)")
-    perf_group.add_argument("--extract-workers",
-                           type=int,
-                           default=max(1, psutil.cpu_count(logical=False)//2),
-                           help="Audio extraction workers (default: half of CPU cores)")
+    adv_group = parser.add_argument_group("Advanced Options")
+    adv_group.add_argument("--device", default=None, help="Processing device (default: cuda when available, otherwise cpu)")
+    adv_group.add_argument("--compute-type", default="auto", help="faster-whisper compute type, such as auto, float16, int8, or int8_float16 (default: %(default)s)")
+    adv_group.add_argument("--inference-batch-size", type=positive_int, default=1, help="faster-whisper inference batch size; values > 1 use BatchedInferencePipeline and require --vad (default: %(default)s)")
+    adv_group.add_argument("--vad", action="store_true", help="Enable faster-whisper VAD filtering")
+    adv_group.add_argument("--verbose", action="store_true", help="Show detailed processing logs")
+    adv_group.add_argument("--enhance-consistency", action="store_true", help="Improve transcription consistency; unsupported with faster batched inference")
+    adv_group.add_argument("--word-timestamps", action="store_true", help="Ask stable-whisper to include word-level timestamps")
+    adv_group.add_argument("--progress-json", action="store_true", help="Emit machine-readable JSON progress events")
+    adv_group.add_argument("--resources", action="store_true", help="Emit periodic JSON resource monitor snapshots while processing")
+    return parser
 
-    # Advanced options
-    adv_group = parser.add_argument_group('Advanced Options')
-    adv_group.add_argument("--device",
-                          default="cuda" if is_available() else "cpu",
-                          help="Processing device (default: %(default)s)")
-    adv_group.add_argument("--verbose",
-                          action="store_true",
-                          help="Show detailed processing logs")
-    adv_group.add_argument("--enhance-consistency",
-                          action="store_true",
-                          help="Improve transcription consistency")
-    adv_group.add_argument("--word-timestamps",
-                          action="store_true",
-                          help="Ask stable-whisper to include word-level timestamps")
 
-    args = parser.parse_args()
+def stderr_print(message):
+    print(message, file=sys.stderr)
 
-    # Validate and resolve paths
-    input_paths = []
-    for pattern in args.paths:
-        input_paths.extend(glob.glob(pattern))
 
-    if not input_paths:
-        print("Error: No valid input files found!")
-        return
+def cli_progress(enabled, stream=None):
+    if not enabled:
+        return None
+    stream = stream or sys.stdout
 
-    if not args.output_video and not args.output_srt and not args.output_txt:
-        args.output_srt = True
+    def emit(event):
+        print(json.dumps(event, ensure_ascii=False, sort_keys=True), file=stream, flush=True)
 
-    # Handle .en models
-    if args.model.endswith(".en"):
-        args.language = "en"
-        warnings.warn("Forcing English transcription")
+    return emit
 
-    # Initialize model
-    try:
-        model = stable_whisper.load_model(args.model, device=args.device)
-    except Exception as e:
-        print(f"Model loading failed: {str(e)}")
-        return
 
-    # Process files
-    audio_paths = get_audio(
-        input_paths,
-        args.output_audio,
-        args.output_dir,
-        args.extract_workers
-    )
+class ResourceSummaryPrinter:
+    def __init__(self, enabled, disk_path, stream=None):
+        self.enabled = enabled
+        self.disk_path = disk_path
+        self.stream = stream or sys.stderr
+        self._stop = threading.Event()
+        self._thread = None
 
-    subtitles = generate_subtitles(
-        audio_paths,
-        args.output_srt,
-        args.output_dir,
-        model,
-        args
-    )
+    def start(self):
+        if not self.enabled:
+            return
+        self._thread = threading.Thread(target=self._run, daemon=True)
+        self._thread.start()
 
-    if args.output_video:
-        create_subtitled_videos(
-            input_paths,
-            subtitles,
-            args.output_dir,
-            args.output_mkv
-        )
+    def stop(self):
+        if not self.enabled:
+            return
+        self._stop.set()
+        if self._thread is not None:
+            self._thread.join(timeout=2)
 
-def get_audio(paths, save_audio, output_dir, num_workers):
-    audio_map = {}
-    tasks = []
+    def _run(self):
+        from .resources import ResourceMonitor
 
-    for path in paths:
-        if is_audio(path):
-            audio_map[path] = path
-            continue
-
-        target_dir = output_dir if save_audio else tempfile.gettempdir()
-        output_path = os.path.join(target_dir, f"{get_filename(path)}.mp3")
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        tasks.append((path, output_path))
-        audio_map[path] = output_path
-
-    if tasks:
-        with multiprocessing.Pool(num_workers) as pool:
-            pool.starmap(ffmpeg_extract_audio, tasks)
-
-    return audio_map
-
-def generate_subtitles(audio_paths, output_srt, output_dir, model, args):
-    subtitles = {}
-
-    for path, audio_path in audio_paths.items():
-        print(f"\nProcessing: {os.path.basename(path)}")
-
+        monitor = ResourceMonitor(root_pid=os.getpid(), disk_path=self.disk_path)
         try:
-            result = model.transcribe(
-                audio_path,
-                language=args.language,
-                verbose=args.verbose,
-                condition_on_previous_text=args.enhance_consistency,
-                word_timestamps=args.word_timestamps
-            )
-        except Exception as e:
-            print(f"Transcription failed: {str(e)}")
-            continue
+            while not self._stop.wait(2.0):
+                self._print_sample(monitor)
+        finally:
+            self._print_sample(monitor)
+            monitor.close()
 
-        subtitle_filename = f"{get_filename(path)}.{args.subtitle_format}"
-        subtitle_dir = output_dir if output_srt else tempfile.gettempdir()
-        subtitle_path = os.path.join(subtitle_dir, subtitle_filename)
-        os.makedirs(os.path.dirname(subtitle_path), exist_ok=True)
+    def _print_sample(self, monitor):
+        event = {"state": "resources", "sample": monitor.sample()}
+        print(json.dumps(event, sort_keys=True), file=self.stream, flush=True)
 
-        try:
-            with open(subtitle_path, "w", encoding="utf-8") as f:
-                write_subtitle(
-                    result,
-                    f,
-                    subtitle_format=args.subtitle_format,
-                    translate_off=args.translate_off or args.translate_to is None,
-                    translate_to=args.translate_to,
-                    bilingual=args.bilingual,
-                    batch_size=args.batch_size,
-                    max_workers=args.max_workers
-                )
-            subtitles[path] = subtitle_path
-            print(f"Subtitles saved to: {os.path.abspath(subtitle_path)}")
-
-            if args.output_txt:
-                txt_path = os.path.join(output_dir, f"{get_filename(path)}.txt")
-                os.makedirs(os.path.dirname(txt_path), exist_ok=True)
-                with open(txt_path, "w", encoding="utf-8") as f:
-                    write_txt(result, f)
-                print(f"Transcript saved to: {os.path.abspath(txt_path)}")
-        except Exception as e:
-            print(f"File write error: {str(e)}")
-
-    return subtitles
-
-def create_subtitled_videos(input_paths, subtitles, output_dir, output_mkv):
-    for path in input_paths:
-        if is_audio(path) or path not in subtitles:
-            continue
-
-        subtitle_path = subtitles[path]
-        output_ext = "mkv" if output_mkv else "mp4"
-        output_filename = f"{get_filename(path)}_subtitled.{output_ext}"
-        output_path = os.path.join(output_dir, output_filename)
-        os.makedirs(output_dir, exist_ok=True)
-
-        print(f"\nCreating subtitled video: {os.path.abspath(output_path)}")
-
-        try:
-            if output_mkv:
-                command = ffmpeg.output(
-                    ffmpeg.input(path),
-                    ffmpeg.input(subtitle_path),
-                    output_path,
-                    vcodec="copy",
-                    acodec="copy",
-                    scodec="copy",
-                ).compile(overwrite_output=True)
-            else:
-                video = ffmpeg.input(path)
-                command = ffmpeg.output(
-                    video.filter(
-                        "subtitles",
-                        filename=subtitle_path,
-                        force_style="OutlineColour=&H40000000,BorderStyle=3",
-                    ),
-                    video.audio,
-                    output_path,
-                    vcodec="libx264",
-                    acodec="copy",
-                ).compile(overwrite_output=True)
-
-            run_ffmpeg_with_progress(command, f"Adding subtitles to {path}...")
-            print("Video creation completed successfully!")
-        except Exception as e:
-            print(f"Video processing failed: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
