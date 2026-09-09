@@ -1,5 +1,7 @@
 # Auto Subtitle Plus
 
+[Website & downloads](https://sectumsempra82.github.io/auto-subtitle-plus/) · [User guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/)
+
 Auto Subtitle Plus generates subtitles for video or audio files, can optionally translate them, and can embed subtitles back into video outputs.
 
 This fork keeps original-language subtitles as the default. Translation only happens when `--translate-to` is provided, and bilingual output only happens when `--bilingual` is provided.
