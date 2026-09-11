@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from html import escape
 from typing import Any
 
 from PySide6.QtCore import Qt, QUrl, Signal
@@ -30,6 +31,7 @@ from ..processing import default_processing_values
 
 
 ASR_MODELS = ("tiny", "base", "small", "medium", "large-v3", "turbo", "distil-large-v3.5")
+GUIDE_URL = "https://sectumsempra82.github.io/auto-subtitle-plus/guide/"
 ASR_LANGUAGES = (
     ("", "Auto detect"),
     ("en", "English"),
@@ -112,6 +114,7 @@ class SettingsPanel(QWidget):
         self._build_layout_tab()
         self._build_files_tab()
         self._build_system_tab()
+        self._set_tooltips()
         self._connect_changes()
         self._sync_controls()
 
@@ -419,8 +422,82 @@ class SettingsPanel(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setWidget(page)
         scroll.setMinimumWidth(0)
-        self.tabs.addTab(scroll, title)
+        index = self.tabs.addTab(scroll, title)
+        self.tabs.setTabToolTip(index, f"{title} settings. Hover over a field or its label for help; open the guide below for details.")
         return form
+
+    def _set_tooltips(self) -> None:
+        help_text = {
+            "backend": "Speech recognition engine: stable uses Whisper with Stable-TS timing; faster enables compute type, batching and VAD. Changing engines can change caption timing and segmentation.",
+            "model": "Speech recognition model. Larger models generally need more memory and time. You can type a backend-supported name. distil-large-v3.5 requires faster and English audio. Missing models download on first use unless offline.",
+            "language": "Language spoken in the recording, not the subtitle output language. Select it or type a language code such as en or it. Auto detect can struggle with short clips, music or multilingual introductions.",
+            "device": "Hardware for speech recognition only. Auto uses CUDA when available, otherwise CPU. CUDA needs a compatible NVIDIA driver and the prepared GPU runtime; translation has its own device setting.",
+            "compute_type": "Faster backend only: numerical precision and memory use. int8 can reduce CPU memory use; float16 and int8_float16 suit compatible GPUs. Supported types depend on hardware. Auto lets the backend choose.",
+            "inference_batch_size": "Faster backend only: speech chunks processed together, not queue files. Values above 1 require VAD and cannot use Enhance consistency. Larger batches need more memory.",
+            "vad": "Faster backend only: voice activity detection filters non-speech audio. Required for inference batches above 1. Useful for long silences; review quiet speech after enabling it.",
+            "word_timestamps": "Request individual word timing from the speech backend. This provides finer timing information, not animated word-by-word captions.",
+            "enhance_consistency": "Condition recognition on previous text for continuity. This can increase repetition on difficult audio or silence. Unsupported with Faster inference batches above 1.",
+            "asr_validation": "Compatibility issues between the selected speech model and backend. Resolve these before starting the queue.",
+            "translate_enabled": "Translate the source transcript into the target language after speech recognition. Leave off to keep subtitles in the spoken language.",
+            "translate_to": "Language for the final translated subtitles. Enable Translate first. Available local models also depend on the source language and route.",
+            "translation_engine": "Local runs translation on this computer after model downloads. Google sends transcript text to an online service and cannot work offline. Local failures never silently switch to Google.",
+            "translation_route": "direct translates source to target. via-en translates through English and may need two models; neither endpoint may be English. Check Route preview before starting.",
+            "translation_model": "Local translation model for the selected languages and route. Enable Translate and choose local to use this field. Incompatible selections are rejected; model downloads are separate from speech models.",
+            "translation_device": "Hardware for local translation, independent of speech recognition. Auto may retry the same model on CPU after GPU memory pressure. Explicit cuda does not fall back.",
+            "bilingual": "Put original text above translated text in each caption. This uses more screen space and always preserves source cue timing. Save original creates a separate file instead.",
+            "context": "Optional background for supported translation models, such as the topic, speakers or intended meaning of a term. Sentence-based models do not gain dialogue awareness. Review whether the result follows your guidance.",
+            "glossary": 'Optional JSON object mapping source terms to preferred translations. Keys and values must be strings, for example {"hello": "ciao"}. Review the output for terminology accuracy.',
+            "route_preview": "Language path for the selected translation route. detected means the source language will be determined during transcription.",
+            "model_info": "Selected model download size, licence, dialogue or sentence context, and cached-file presence. Cached files are verified when processing starts; prepared models and runtimes can need extra disk space.",
+            "open_model": "Open the selected local model's source page in your browser to review its licence and details. Available when that model has a source URL; the OPUS-MT resolver has no single model page.",
+            "subtitle_layout": "For translated captions: adaptive can split or merge captions within speech spans; preserve keeps source cue timing. Bilingual always preserves timing. Layout limits are readability targets, not guarantees.",
+            "max_chars_per_line": "Target maximum characters per translated caption line. Lower values make shorter lines. The app may warn when text cannot fit without losing meaning.",
+            "max_lines": "Target maximum lines per translated caption. More lines cover more of the picture. Bilingual text also needs space for the original language.",
+            "max_cps": "Target reading speed in characters per second (CPS). Lower values allow more reading time. For example, 68 characters over 4 seconds is 17 CPS.",
+            "min_duration": "Minimum target caption display time in seconds. Helps avoid brief flashes; available speech timing can limit what is possible.",
+            "max_duration": "Maximum target caption display time in seconds. Must be at least Min duration. Review estimated timing in a video player.",
+            "beside_input": "Save outputs next to each source file. Useful when files in different folders share the same base name.",
+            "folder_output": "Save all outputs to the Output folder below. Files with the same base name can conflict in a shared destination.",
+            "output_dir": "Writable destination used when Use folder is selected. Type a path or browse. Choosing a folder does not move existing outputs.",
+            "browse_output_dir": "Choose the output destination. Select Use folder first to enable this button.",
+            "output_srt": "Write a separate subtitle file using the selected SRT or VTT format. Disable only if you do not need a standalone subtitle file.",
+            "subtitle_format": "Format for the subtitle file: SRT is widely supported by players and editors; VTT is useful for web video. Enable Subtitle file to export it.",
+            "output_txt": "Write a plain TXT transcript without subtitle timing. With translation enabled, it contains the final translated text.",
+            "output_audio": "Keep the extracted audio as an additional output. This uses extra disk space.",
+            "output_video": "Create a subtitled video using Video mode below. This adds processing time and disk usage.",
+            "video_mode": "MP4 burn encodes captions into the picture so they cannot be switched off. MKV soft adds a selectable subtitle track for compatible players. Enable Video first.",
+            "output_source_subtitles": "When translating, also export the original-language subtitles separately. This does not turn on bilingual captions.",
+            "output_intermediate_subtitles": "For a via-en translation, retain the English intermediate as a separate output. Has no intermediate to save on a direct route.",
+            "overwrite": "Allow existing output files to be replaced after confirmation for the queued batch. Leave off to protect previous results.",
+            "offline": "Prevent missing model/helper downloads and online translation. Prepare the exact models and runtime before using this. Missing files cause an error; Google is incompatible.",
+            "retry_translation": "Reuse a matching cached source transcript for translation and output. Fails if that cache is missing; it does not transcribe again. Turn off when a new transcription is needed.",
+            "verbose": "Include more processing detail in Activity for troubleshooting. Logs can contain local paths and content; review before sharing.",
+            "extract_workers": "Audio extraction concurrency when a processing job handles multiple inputs. This does not change inference batch size or make the desktop run queue files simultaneously.",
+            "translation_cache_dir": "Optional writable root for translation models and processing caches. Empty uses the app-managed location. Changing this does not migrate existing cached files.",
+            "browse_cache_dir": "Choose the translation cache location. Existing models and cached stages are not moved automatically.",
+            "clear_cache": "While idle, ask before deleting cached source transcripts and translation stages. Downloaded models and runtimes remain. Cleared transcripts will no longer be available to Retry translation.",
+        }
+        for name, text in help_text.items():
+            widget = getattr(self, name)
+            widget.setToolTip(f"<qt>{escape(text)}</qt>")
+            widget.setAccessibleDescription(text)
+        for index in range(self.tabs.count()):
+            form = self.tabs.widget(index).widget().layout()
+            for row in range(form.rowCount()):
+                label = form.itemAt(row, QFormLayout.ItemRole.LabelRole)
+                field = form.itemAt(row, QFormLayout.ItemRole.FieldRole)
+                if label is not None and field is not None:
+                    widget = field.widget() if field.widget() is not None else field.layout().itemAt(0).widget()
+                    label.widget().setToolTip(widget.toolTip())
+                    if widget.accessibleName() == "":
+                        widget.setAccessibleName(label.widget().text())
+            title = self.tabs.tabText(index)
+            section = title.lower()
+            guide = QLabel(f'<a href="{GUIDE_URL}#{section}">{title} guide</a>')
+            guide.setOpenExternalLinks(True)
+            guide.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+            guide.setToolTip(f"Open the {title.lower()} section of the online user guide in your browser.\n{GUIDE_URL}#{section}")
+            form.addRow("Help", guide)
 
     def _connect_changes(self) -> None:
         widgets = (
@@ -561,7 +638,6 @@ class SettingsPanel(QWidget):
         self._translation_model_invalid = bool(model_id) and model_id not in valid_models
         if self._translation_model_invalid:
             self._last_model_url = None
-            self.model_info.setToolTip(model_id)
             self.model_info.setText("Invalid model for current language/route.")
             return
         if not model_id or model_id == "opus-mt":

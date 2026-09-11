@@ -60,7 +60,8 @@ def main():
         shutil.copytree(ROOT / "assets/screenshots", folder / "assets/screenshots")
         (folder / "packaging").mkdir()
         shutil.copy2(ROOT / "packaging/README.md", folder / "packaging/README.md")
-        shutil.copy2(ROOT / "packaging/RELEASE-v0.3.0-rc.1.md", folder / "packaging/RELEASE-v0.3.0-rc.1.md")
+        release_notes = ROOT / f"packaging/RELEASE-v{version.replace('rc', '-rc.')}.md"
+        shutil.copy2(release_notes, folder / "packaging" / release_notes.name)
         shutil.copytree(ROOT / "packaging/licenses", folder / "licenses")
         executable = folder / ("auto_subtitle_plus_gui.exe" if edition == "GUI" else "auto_subtitle_plus.exe")
         command = [str(compiler), "/nologo", "/optimize+", "/platform:x64", "/r:System.Web.Extensions.dll",

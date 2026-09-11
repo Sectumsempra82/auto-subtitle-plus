@@ -4,6 +4,11 @@ Extract the whole ZIP into a writable folder. Keep its files together.
 CLI: auto_subtitle_plus.exe --help
 GUI: double-click auto_subtitle_plus_gui.exe
 
+Hover over controls or setting labels for help, including disabled settings.
+Use Queue guide or the guide link in each settings tab for online documentation:
+https://sectumsempra82.github.io/auto-subtitle-plus/guide/
+Tooltips work offline; the online guide requires a browser and network access.
+
 First run downloads verified dependencies into data, then starts the app.
 CPU is the initial runtime profile. Setup CUDA.cmd explicitly selects the
 larger GPU runtime; Setup CPU.cmd switches back. This changes available

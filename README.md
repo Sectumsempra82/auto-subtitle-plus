@@ -43,7 +43,13 @@ batch's settings. Pause finishes the current file; Cancel stops it and pauses
 the queue. Failed files remain visible with diagnostics while later jobs continue.
 
 Settings are grouped into Speech, Translate, Layout, Files, and System tabs.
-They expose the supported backend/model/device options, local or explicitly
+Hover over a setting or its label for explanations, units, requirements and
+tradeoffs. Labels retain their help when an individual setting is disabled.
+Queue actions, progress indicators, output files and resource meters also provide
+hover help. Each settings tab has a clickable guide link, and **Queue guide**
+opens the [desktop and queue manual](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#queue).
+These links open your browser; the tooltips themselves work offline.
+The tabs expose the supported backend/model/device options, local or explicitly
 online translation, direct/pivot routing, context/glossary, caption readability,
 all output formats, offline mode, stage retries, and cache location/clearing.
 Legacy no-op translation worker flags are intentionally not GUI controls.
@@ -107,10 +113,10 @@ source; public redistribution additionally requires the licensing checks below.
 ### Portable Windows Editions
 
 Download the current **Windows x64 release candidate** from
-[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.1):
+[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2):
 
-- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.1/AutoSubtitlePlus-CLI-Windows-x64.zip)
-- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.1/AutoSubtitlePlus-GUI-Windows-x64.zip)
+- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-CLI-Windows-x64.zip)
+- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-GUI-Windows-x64.zip)
 
 Each archive is under 2 MiB, not an all-dependencies bundle. Initial
 CLI CPU dependency archives total approximately 472 MiB; prepared runtime files

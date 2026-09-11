@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
 )
 
 from .state import QueueItem, StateStore, local_media_path, MEDIA_EXTENSIONS, MAX_QUEUE
-from .settings import SettingsPanel
+from .settings import GUIDE_URL, SettingsPanel
 
 
 def byte_text(value: float | None) -> str:
@@ -50,6 +50,14 @@ class QueueModel(QAbstractTableModel):
         return len(self.headings)
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):
+        if role == Qt.ItemDataRole.ToolTipRole and orientation == Qt.Orientation.Horizontal:
+            return (
+                "Local audio or video file. Hover over a row to see its full path and any error.",
+                "Source file size on disk, not the size of the generated outputs.",
+                "Progress within the current processing stage, not the whole file or queue. Working means no percentage is available.",
+                "Queue state, or the current stage while the file is running. Failed and cancelled files can be requeued with Retry.",
+                "Time spent processing this file, excluding time waiting in the queue.",
+            )[section]
         if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self.headings[section]
 
@@ -170,8 +178,16 @@ class ResourceStrip(QFrame):
         layout.setSpacing(20)
         self.meters = {}
         self.network_totals = None
+        meter_help = {
+            "cpu": "System CPU load and this app's CPU use. Other applications also contribute to the system total.",
+            "ram": "System memory used and total capacity, plus this app's memory use. The bar shows system memory usage.",
+            "gpu": "NVIDIA GPU load and device memory use, including other applications. Unavailable means telemetry could not be read, not zero usage.",
+            "network": "System-wide download/upload rates and transferred totals since launch, including traffic from other applications.",
+            "disk": "Free space and total capacity for the monitored output location, or home folder before an output is selected. The bar shows used space, not disk activity.",
+        }
         for key, title in (("cpu", "CPU"), ("ram", "MEMORY"), ("gpu", "GPU"), ("network", "NETWORK / SYSTEM"), ("disk", "DISK")):
             box = QWidget()
+            box.setToolTip(meter_help[key])
             column = QVBoxLayout(box)
             column.setContentsMargins(0, 0, 0, 0)
             column.setSpacing(3)
@@ -287,6 +303,11 @@ class MainWindow(QMainWindow):
         self.summary = QLabel()
         self.summary.setObjectName("muted")
         header.addWidget(self.summary)
+        guide = QLabel(f'<a href="{GUIDE_URL}#queue">Queue guide</a>')
+        guide.setOpenExternalLinks(True)
+        guide.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        guide.setToolTip(f"Open help for the queue, progress, outputs and resource meters in your browser.\n{GUIDE_URL}#queue")
+        header.addWidget(guide)
         about = self.tool_button(QStyle.StandardPixmap.SP_MessageBoxInformation, "Credits and version", self.show_credits)
         header.addWidget(about)
         page.addLayout(header)
@@ -298,22 +319,24 @@ class MainWindow(QMainWindow):
         queue_layout.setContentsMargins(0, 0, 8, 0)
         toolbar = QHBoxLayout()
         self.add_button = QPushButton("Add files")
+        self.add_button.setToolTip("Add local audio or video files to the queue (Ctrl+O). You can also drag files onto this window. Duplicate paths are skipped.")
         self.add_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton))
         self.add_button.clicked.connect(self.choose_files)
         toolbar.addWidget(self.add_button)
-        self.folder_button = self.tool_button(QStyle.StandardPixmap.SP_DirIcon, "Add media from a local folder", self.choose_folder)
+        self.folder_button = self.tool_button(QStyle.StandardPixmap.SP_DirIcon, "Add supported media from a local folder. Subfolders are not scanned.", self.choose_folder)
         toolbar.addWidget(self.folder_button)
         toolbar.addStretch()
         self.up_button = self.tool_button(QStyle.StandardPixmap.SP_ArrowUp, "Move selected file up", lambda: self.move_selected(-1))
         self.down_button = self.tool_button(QStyle.StandardPixmap.SP_ArrowDown, "Move selected file down", lambda: self.move_selected(1))
-        self.retry_button = self.tool_button(QStyle.StandardPixmap.SP_BrowserReload, "Retry selected files", self.retry_selected)
-        self.remove_button = self.tool_button(QStyle.StandardPixmap.SP_DialogDiscardButton, "Remove selected files from queue", self.remove_selected)
-        self.clear_button = self.tool_button(QStyle.StandardPixmap.SP_TrashIcon, "Remove completed files from queue", self.clear_completed)
+        self.retry_button = self.tool_button(QStyle.StandardPixmap.SP_BrowserReload, "Requeue selected files, then use Start queue to process them with the current settings. This does not enable cached-only Retry translation.", self.retry_selected)
+        self.remove_button = self.tool_button(QStyle.StandardPixmap.SP_DialogDiscardButton, "Remove selected files from the queue. Source files and generated outputs stay on disk.", self.remove_selected)
+        self.clear_button = self.tool_button(QStyle.StandardPixmap.SP_TrashIcon, "Remove completed entries from the queue. Keep their source files and outputs on disk.", self.clear_completed)
         for button in (self.up_button, self.down_button, self.retry_button, self.remove_button, self.clear_button):
             toolbar.addWidget(button)
         queue_layout.addLayout(toolbar)
         self.model = QueueModel(self.items, self)
         self.table = QTableView()
+        self.table.setToolTip("Select a file to see its outputs. Ctrl-click or Shift-click to select several files. Reordering and removing entries are available while idle.")
         self.table.setObjectName("fileQueue")
         self.table.setModel(self.model)
         self.table.setItemDelegateForColumn(2, ProgressDelegate(self.table))
@@ -330,12 +353,14 @@ class MainWindow(QMainWindow):
         self.table.selectionModel().selectionChanged.connect(self.show_selected_outputs)
         queue_layout.addWidget(self.table, 1)
         self.current_label = QLabel("Ready")
+        self.current_label.setToolTip("Latest processing stage or result for the active file. Open Activity below for details and errors.")
         self.current_label.setObjectName("currentStage")
         self.current_label.setTextFormat(Qt.TextFormat.PlainText)
         self.current_label.setWordWrap(True)
         self.current_label.setMinimumHeight(34)
         queue_layout.addWidget(self.current_label)
         self.current_progress = QProgressBar()
+        self.current_progress.setToolTip("Progress of the current stage. It can reset when a new stage begins; a moving indicator means the stage has no measurable percentage.")
         self.current_progress.setRange(0, 100)
         self.current_progress.setValue(0)
         self.current_progress.setFixedHeight(18)
@@ -350,9 +375,14 @@ class MainWindow(QMainWindow):
         self.outputs.itemDoubleClicked.connect(self.open_output)
         self.details.addTab(self.activity, "Activity")
         self.details.addTab(self.outputs, "Outputs")
+        self.details.setTabToolTip(0, "Processing messages, warnings and errors for this session. The most recent 1,200 lines are retained.")
+        self.details.setTabToolTip(1, "Generated files and errors for selected queue entries. Double-click an output to open it.")
+        self.activity.setToolTip("Recent processing messages. Select text and press Ctrl+C to copy it. Logs may contain local paths or content; review before sharing.")
+        self.outputs.setToolTip("Outputs for selected queue files. Hover for a full path; double-click a file to open it in its default application.")
         queue_layout.addWidget(self.details)
         controls = QHBoxLayout()
         self.start_button = QPushButton("Start queue")
+        self.start_button.setToolTip("Process queued files one at a time using the current settings. Requires at least one queued file; settings are locked during processing and cache clearing.")
         self.start_button.setObjectName("primary")
         self.start_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
         self.start_button.clicked.connect(self.start_queue)
@@ -374,6 +404,7 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self.settings)
         splitter.setSizes([655, 405])
         self.resources = ResourceStrip()
+        self.summary.setToolTip("Total queue entries, completed files and files waiting to run. Failed or cancelled files must be requeued before Start will process them.")
         page.addWidget(self.resources)
         shortcut = QAction(self)
         shortcut.setShortcut("Ctrl+O")
@@ -612,7 +643,7 @@ class MainWindow(QMainWindow):
             for path in item.outputs:
                 entry = QListWidgetItem(Path(path).name)
                 entry.setData(Qt.ItemDataRole.UserRole, path)
-                entry.setToolTip(path)
+                entry.setToolTip(path + "\nDouble-click to open in the default application.")
                 self.outputs.addItem(entry)
             if item.error:
                 self.outputs.addItem(item.error)
