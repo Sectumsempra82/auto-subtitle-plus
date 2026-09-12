@@ -22,3 +22,4 @@ model.bin
 *.flac
 /test-media/
 /private-media/
+/.venv/

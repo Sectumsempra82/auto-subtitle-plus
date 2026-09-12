@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from html import escape
 from typing import Any
 
@@ -103,8 +104,9 @@ class SettingsPanel(QWidget):
         self.tabs.setMinimumWidth(0)
         self.tabs.setElideMode(Qt.TextElideMode.ElideNone)
         self.tabs.tabBar().setExpanding(False)
-        self.tabs.tabBar().setUsesScrollButtons(False)
-        self.tabs.setStyleSheet("QTabBar::tab { min-width: 0px; padding: 9px 8px; }")
+        self.tabs.tabBar().setUsesScrollButtons(True)
+        if sys.platform != "darwin":
+            self.tabs.setStyleSheet("QTabBar::tab { min-width: 0px; padding: 9px 8px; }")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.addWidget(self.tabs)
@@ -296,7 +298,7 @@ class SettingsPanel(QWidget):
         form = self._form_tab("Translate")
         self.translate_enabled = QCheckBox()
         self.translate_to = self._data_combo(TARGET_LANGUAGES)
-        self.translation_engine = self._combo(("local", "google"))
+        self.translation_engine = self._combo(("local",) if sys.platform == "darwin" else ("local", "google"))
         self.translation_route = self._combo(("direct", "via-en"))
         self.translation_model = self._combo((), editable=True)
         self.translation_device = self._combo(("auto", "cpu", "cuda"))
@@ -350,9 +352,9 @@ class SettingsPanel(QWidget):
 
     def _build_files_tab(self) -> None:
         form = self._form_tab("Files")
-        self.beside_input = QCheckBox("Beside input")
+        self.beside_input = QCheckBox()
         self.beside_input.setChecked(True)
-        self.folder_output = QCheckBox("Folder")
+        self.folder_output = QCheckBox()
         self.output_dir = self._combo((), editable=True)
         self.browse_output_dir = self._browse_button()
         output_row = QHBoxLayout()
@@ -613,6 +615,8 @@ class SettingsPanel(QWidget):
         self.translation_model.addItems(models)
         if current:
             self._set_combo_text(self.translation_model, current)
+        elif sys.platform == "darwin" and "m2m100-418m" in models:
+            self.translation_model.setCurrentText("m2m100-418m")
         elif models:
             self.translation_model.setCurrentIndex(0)
         self.translation_model.blockSignals(False)
@@ -658,6 +662,18 @@ class SettingsPanel(QWidget):
         self.model_info.setText(
             f"{size_mib:.1f} MiB, license {spec.license}, {context_mode} context. {cache_state}.{notice}"
         )
+        if sys.platform == "darwin" and spec.family == "hy-mt2":
+            self.model_info.setText(self.model_info.text() + " Windows-only runtime. On Mac, choose M2M100, NLLB, MADLAD or a supported OPUS language pair.")
+
+    def validate_platform(self, values: dict[str, Any]) -> None:
+        if sys.platform != "darwin":
+            return
+        if values["device"] == "cuda" or (values["translate_to"] and values["translation_device"] == "cuda"):
+            raise ValueError("CUDA is not available on macOS. Choose Auto or CPU. Apple GPU acceleration is not supported by this desktop workflow yet.")
+        if values["translate_to"] and values["translation_engine"] != "local":
+            raise ValueError("The Mac desktop uses local translation only.")
+        if values["translate_to"] and (values["translation_model"] or "").startswith("hy-mt2"):
+            raise ValueError("The managed Hy-MT2 runtime is Windows-only. Choose M2M100, NLLB, MADLAD or a supported OPUS language pair for local translation on Mac.")
 
     def _source_files_present(self, spec: Any) -> bool:
         directory = source_dir(spec, self.translation_cache_dir.currentText().strip() or None)

@@ -212,11 +212,39 @@ class DesktopWindowTests(unittest.TestCase):
             self.assertEqual(window.items[0].progress, 0.0)
             self.assertEqual(window.items[0].error, error)
             self.assertIn(error, window.activity.toPlainText())
+            self.assertEqual(window.current_progress.value(), 0)
+            self.assertEqual(window.current_label.text(), "Queue finished — 1 failed")
 
             window.table.selectRow(0)
             window.show_selected_outputs()
             self.assertEqual(window.outputs.count(), 1)
             self.assertEqual(window.outputs.item(0).text(), error)
+
+            window.runner = FakeRunner()
+            window.retry_selected()
+            window.start_queue()
+            self.assertTrue(wait_until(lambda: not window.running and window.worker is None))
+            self.assertEqual(window.current_progress.value(), 100)
+            self.assertEqual(window.current_label.text(), "Queue finished")
+
+    def test_pause_and_cancel_menu_actions_follow_buttons_when_queue_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            media = Path(tmp) / "clip.wav"
+            write_tiny_wav(media)
+            window = self.make_window(runner=FakeRunner(wait_for_cancel=True))
+            window.add_paths([str(media)])
+            window.start_queue()
+            self.assertTrue(wait_until(lambda: window.worker is not None and window.worker.isRunning()))
+            window.pause_queue()
+            window.update_controls()
+            self.assertFalse(window.pause_action.isEnabled())
+            self.assertFalse(window.pause_button.isEnabled())
+            self.assertEqual(window.pause_button.text(), "Pausing after file")
+            window.cancel_current()
+            window.update_controls()
+            self.assertFalse(window.cancel_action.isEnabled())
+            self.assertFalse(window.cancel_button.isEnabled())
+            self.assertTrue(wait_until(lambda: not window.running and window.worker is None))
 
 
 if __name__ == "__main__":

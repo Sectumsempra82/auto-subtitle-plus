@@ -6,14 +6,14 @@ import sys
 import threading
 import time
 
-from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QThread, QTimer, Signal, QUrl
-from PySide6.QtGui import QColor, QDesktopServices, QPalette, QAction
+from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex, QThread, QTimer, Signal, QUrl, QEvent
+from PySide6.QtGui import QColor, QDesktopServices, QPalette, QAction, QKeySequence, QFontDatabase
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QSplitter,
     QLabel, QPushButton, QToolButton, QTableView, QHeaderView, QAbstractItemView,
     QStyledItemDelegate, QStyleOptionProgressBar, QStyle, QProgressBar,
     QPlainTextEdit, QTabWidget, QListWidget, QListWidgetItem, QFileDialog,
-    QMessageBox, QFrame,
+    QMessageBox, QFrame, QStackedWidget,
 )
 
 from .state import QueueItem, StateStore, local_media_path, MEDIA_EXTENSIONS, MAX_QUEUE
@@ -70,6 +70,8 @@ class QueueModel(QAbstractTableModel):
         if role == Qt.ItemDataRole.UserRole:
             return {"progress": item.progress, "status": item.status, "stage": item.stage}
         if role == Qt.ItemDataRole.ForegroundRole and index.column() == 3:
+            if sys.platform == "darwin" and QApplication.palette().color(QPalette.ColorRole.Base).lightness() < 128:
+                return QColor({"completed": "#65d6ad", "failed": "#ff8b82", "cancelled": "#e5bf76", "running": "#71d2d6"}.get(item.status, "#bec6cc"))
             return QColor({"completed": "#167759", "failed": "#b33d35", "cancelled": "#916318", "running": "#147e86"}.get(item.status, "#60676d"))
         if role == Qt.ItemDataRole.DisplayRole:
             if item.path not in self._sizes:
@@ -267,6 +269,7 @@ class MainWindow(QMainWindow):
         self.active_item = None
         self.started_at = 0.0
         self.batch_settings = {}
+        self.batch_errors = 0
         self.resource_thread = None
         self._build_ui()
         try:
@@ -299,6 +302,11 @@ class MainWindow(QMainWindow):
         title = QLabel("Auto Subtitle Plus")
         title.setObjectName("appTitle")
         header.addWidget(title)
+        if sys.platform == "darwin":
+            local = QLabel("On your Mac")
+            local.setObjectName("muted")
+            local.setToolTip("Media and subtitle processing stay on this Mac. Missing models may download unless Offline is enabled.")
+            header.addWidget(local)
         header.addStretch()
         self.summary = QLabel()
         self.summary.setObjectName("muted")
@@ -319,7 +327,7 @@ class MainWindow(QMainWindow):
         queue_layout.setContentsMargins(0, 0, 8, 0)
         toolbar = QHBoxLayout()
         self.add_button = QPushButton("Add files")
-        self.add_button.setToolTip("Add local audio or video files to the queue (Ctrl+O). You can also drag files onto this window. Duplicate paths are skipped.")
+        self.add_button.setToolTip("Add local audio or video files to the queue. You can also drag files onto this window. Duplicate paths are skipped.")
         self.add_button.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_DialogOpenButton))
         self.add_button.clicked.connect(self.choose_files)
         toolbar.addWidget(self.add_button)
@@ -336,7 +344,8 @@ class MainWindow(QMainWindow):
         queue_layout.addLayout(toolbar)
         self.model = QueueModel(self.items, self)
         self.table = QTableView()
-        self.table.setToolTip("Select a file to see its outputs. Ctrl-click or Shift-click to select several files. Reordering and removing entries are available while idle.")
+        modifier = "Command" if sys.platform == "darwin" else "Ctrl"
+        self.table.setToolTip(f"Select a file to see its outputs. {modifier}-click or Shift-click to select several files. Reordering and removing entries are available while idle.")
         self.table.setObjectName("fileQueue")
         self.table.setModel(self.model)
         self.table.setItemDelegateForColumn(2, ProgressDelegate(self.table))
@@ -344,6 +353,7 @@ class MainWindow(QMainWindow):
         self.table.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setShowGrid(False)
+        self.table.setWordWrap(False)
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().hide()
         self.table.verticalHeader().setDefaultSectionSize(40)
@@ -351,7 +361,25 @@ class MainWindow(QMainWindow):
         for column, width in ((1, 76), (2, 116), (3, 99), (4, 64)):
             self.table.setColumnWidth(column, width)
         self.table.selectionModel().selectionChanged.connect(self.show_selected_outputs)
-        queue_layout.addWidget(self.table, 1)
+        self.queue_stack = QStackedWidget()
+        self.queue_stack.addWidget(self.table)
+        empty = QWidget()
+        empty_layout = QVBoxLayout(empty)
+        empty_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_title = QLabel("Your next subtitles start here.")
+        empty_title.setObjectName("emptyTitle")
+        empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_layout.addWidget(empty_title)
+        hint = QLabel("Drop audio or video here to create subtitles.\nOriginal-language subtitles are the default.")
+        hint.setObjectName("muted")
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hint.setWordWrap(True)
+        empty_layout.addWidget(hint)
+        empty_add = QPushButton("Choose files…")
+        empty_add.clicked.connect(self.choose_files)
+        empty_layout.addWidget(empty_add, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.queue_stack.addWidget(empty)
+        queue_layout.addWidget(self.queue_stack, 1)
         self.current_label = QLabel("Ready")
         self.current_label.setToolTip("Latest processing stage or result for the active file. Open Activity below for details and errors.")
         self.current_label.setObjectName("currentStage")
@@ -371,13 +399,15 @@ class MainWindow(QMainWindow):
         self.activity.setReadOnly(True)
         self.activity.document().setMaximumBlockCount(1200)
         self.activity.setObjectName("activityLog")
+        if sys.platform == "darwin":
+            self.activity.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         self.outputs = QListWidget()
         self.outputs.itemDoubleClicked.connect(self.open_output)
         self.details.addTab(self.activity, "Activity")
         self.details.addTab(self.outputs, "Outputs")
         self.details.setTabToolTip(0, "Processing messages, warnings and errors for this session. The most recent 1,200 lines are retained.")
         self.details.setTabToolTip(1, "Generated files and errors for selected queue entries. Double-click an output to open it.")
-        self.activity.setToolTip("Recent processing messages. Select text and press Ctrl+C to copy it. Logs may contain local paths or content; review before sharing.")
+        self.activity.setToolTip(f"Recent processing messages. Select text and press {modifier}+C to copy it. Logs may contain local paths or content; review before sharing.")
         self.outputs.setToolTip("Outputs for selected queue files. Hover for a full path; double-click a file to open it in its default application.")
         queue_layout.addWidget(self.details)
         controls = QHBoxLayout()
@@ -406,10 +436,42 @@ class MainWindow(QMainWindow):
         self.resources = ResourceStrip()
         self.summary.setToolTip("Total queue entries, completed files and files waiting to run. Failed or cancelled files must be requeued before Start will process them.")
         page.addWidget(self.resources)
-        shortcut = QAction(self)
-        shortcut.setShortcut("Ctrl+O")
-        shortcut.triggered.connect(self.choose_files)
-        self.addAction(shortcut)
+        self._build_menus()
+        if sys.platform == "darwin":
+            for label in self.findChildren(QLabel):
+                name = label.objectName()
+                size = {"appTitle": 21, "emptyTitle": 24, "muted": 12, "meterDetail": 12, "meterHeading": 10}.get(name)
+                if size is not None or name in ("meterValue", "currentStage"):
+                    font = label.font()
+                    if size is not None:
+                        font.setPixelSize(size)
+                    font.setBold(name in ("appTitle", "emptyTitle", "meterHeading", "meterValue", "currentStage"))
+                    label.setFont(font)
+            font = self.start_button.font()
+            font.setBold(True)
+            self.start_button.setFont(font)
+
+    def _build_menus(self):
+        file_menu = self.menuBar().addMenu("File")
+        self.open_action = file_menu.addAction("Add Files…")
+        self.open_action.setShortcut(QKeySequence.StandardKey.Open)
+        self.open_action.triggered.connect(self.choose_files)
+        file_menu.addAction("Add Folder…", self.choose_folder)
+        file_menu.addSeparator()
+        file_menu.addAction("Open Output Folder", self.open_output_folder)
+        close = file_menu.addAction("Close Window", self.close)
+        close.setShortcut(QKeySequence.StandardKey.Close)
+        quit_action = file_menu.addAction("Quit Auto Subtitle Plus", self.close)
+        quit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        quit_action.setMenuRole(QAction.MenuRole.QuitRole)
+        queue_menu = self.menuBar().addMenu("Queue")
+        self.start_action = queue_menu.addAction("Start Queue", self.start_button.click)
+        self.start_action.setShortcut("Ctrl+Return")
+        self.pause_action = queue_menu.addAction("Pause After Current File", self.pause_button.click)
+        self.cancel_action = queue_menu.addAction("Cancel Current File", self.cancel_button.click)
+        help_menu = self.menuBar().addMenu("Help")
+        about = help_menu.addAction("About Auto Subtitle Plus", self.show_credits)
+        about.setMenuRole(QAction.MenuRole.AboutRole)
 
     def tool_button(self, icon, tooltip, callback):
         button = QToolButton()
@@ -503,6 +565,7 @@ class MainWindow(QMainWindow):
         try:
             from ..api import JobOptions
             settings = self.settings.options()
+            self.settings.validate_platform(settings)
             queued = [item for item in self.items if item.status == "queued"]
             if not queued:
                 return
@@ -521,6 +584,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Check queue settings", str(error))
             return
         self.running, self.pause_after_current = True, False
+        self.batch_errors = 0
         self.update_controls()
         self._next_job()
 
@@ -566,6 +630,8 @@ class MainWindow(QMainWindow):
         result = thread.result or {"status": "failed", "error": "Worker stopped without a result.", "outputs": [], "warnings": []}
         item = self.active_item
         item.status = result["status"]
+        if item.status == "failed":
+            self.batch_errors += 1
         item.stage = item.status.title()
         item.progress = 1.0 if item.status == "completed" else 0.0
         item.error = result["error"]
@@ -584,9 +650,14 @@ class MainWindow(QMainWindow):
 
     def _finish_queue(self):
         self.running = False
-        self.current_label.setText("Queue paused" if self.pause_after_current else "Queue finished")
+        if self.pause_after_current:
+            self.current_label.setText("Queue paused")
+        elif self.batch_errors:
+            self.current_label.setText(f"Queue finished — {self.batch_errors} failed")
+        else:
+            self.current_label.setText("Queue finished")
         self.current_progress.setRange(0, 100)
-        self.current_progress.setValue(0 if self.pause_after_current else 100)
+        self.current_progress.setValue(0 if self.pause_after_current or self.batch_errors else 100)
         self.update_controls()
         self.save_state()
         if self.closing:
@@ -596,6 +667,7 @@ class MainWindow(QMainWindow):
         self.pause_after_current = True
         self.pause_button.setText("Pausing after file")
         self.pause_button.setEnabled(False)
+        self.pause_action.setEnabled(False)
 
     def cancel_current(self):
         if self.worker:
@@ -603,6 +675,9 @@ class MainWindow(QMainWindow):
             self.worker.cancel_event.set()
             self.current_label.setText("Cancelling active file...")
             self.cancel_button.setEnabled(False)
+            self.cancel_action.setEnabled(False)
+            self.pause_button.setEnabled(False)
+            self.pause_action.setEnabled(False)
 
     def _tick(self):
         if self.resource_thread:
@@ -623,13 +698,19 @@ class MainWindow(QMainWindow):
                 self.current_progress.setValue(round(max(0, min(1, value)) * 100))
         done = sum(item.status == "completed" for item in self.items)
         queued = sum(item.status == "queued" for item in self.items)
-        self.summary.setText(f"{len(self.items)} files  |  {done} completed  |  {queued} queued")
+        noun = "file" if len(self.items) == 1 else "files"
+        self.summary.setText(f"{len(self.items)} {noun}  |  {done} completed  |  {queued} queued")
 
     def update_controls(self):
         self.start_button.setEnabled(not self.running and self.cache_worker is None and any(item.status == "queued" for item in self.items))
-        self.pause_button.setText("Pause queue")
+        self.pause_button.setText("Pausing after file" if self.running and self.pause_after_current else "Pause queue")
         self.pause_button.setEnabled(self.running and not self.pause_after_current)
-        self.cancel_button.setEnabled(self.running)
+        cancelling = self.worker is not None and self.worker.cancel_event.is_set()
+        self.cancel_button.setEnabled(self.running and not cancelling)
+        self.start_action.setEnabled(self.start_button.isEnabled())
+        self.pause_action.setEnabled(self.pause_button.isEnabled())
+        self.cancel_action.setEnabled(self.cancel_button.isEnabled())
+        self.queue_stack.setCurrentIndex(0 if self.items else 1)
         self.settings.setEnabled(not self.running and self.cache_worker is None)
         for button in (self.up_button, self.down_button, self.remove_button, self.clear_button, self.retry_button):
             button.setEnabled(not self.running)
@@ -758,6 +839,9 @@ QSplitter::handle { background: #e3e9ec; }
 
 
 def apply_theme(app):
+    if sys.platform == "darwin":
+        app.setStyleSheet("")
+        return
     app.setStyle("Fusion")
     palette = QPalette()
     for role, color in (
@@ -777,12 +861,42 @@ def apply_theme(app):
     app.setStyleSheet(STYLE)
 
 
+class DesktopApplication(QApplication):
+    """Handle files opened through Finder before or after window creation."""
+
+    def __init__(self, argv):
+        self.window = None
+        self.pending_files = []
+        super().__init__(argv)
+
+    def event(self, event):
+        if event.type() == QEvent.Type.FileOpen:
+            path = event.file()
+            if path and Path(path).resolve() == Path(sys.argv[0]).resolve():
+                return True
+            if path:
+                if self.window is None:
+                    self.pending_files.append(path)
+                else:
+                    self.window.add_paths([path])
+                    self.window.showNormal()
+                    self.window.raise_()
+                    self.window.activateWindow()
+            return True
+        return super().event(event)
+
+
 def launch():
-    app = QApplication.instance() or QApplication(sys.argv)
+    app = QApplication.instance() or DesktopApplication(sys.argv)
     app.setApplicationName("Auto Subtitle Plus")
     app.setOrganizationName("AutoSubtitlePlus")
     apply_theme(app)
     window = MainWindow()
+    if isinstance(app, DesktopApplication):
+        app.window = window
+        if app.pending_files:
+            window.add_paths(app.pending_files)
+            app.pending_files.clear()
     window.show()
     if len(sys.argv) > 1:
         window.add_paths(sys.argv[1:])

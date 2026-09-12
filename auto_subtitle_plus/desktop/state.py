@@ -5,6 +5,7 @@ import json
 import math
 import os
 from pathlib import Path
+import sys
 import uuid
 
 from ..translation_pipeline import atomic_write_text
@@ -43,13 +44,20 @@ def local_media_path(value: str) -> str:
 
 class StateStore:
     def __init__(self, path: str | Path | None = None):
-        self.path = Path(path) if path else Path(os.environ.get("LOCALAPPDATA", Path.home() / ".cache")) / "AutoSubtitlePlus" / "desktop" / "state.json"
+        base = Path.home() / ("Library/Application Support" if sys.platform == "darwin" else ".cache")
+        self.path = Path(path) if path else Path(os.environ.get("LOCALAPPDATA", base)) / "AutoSubtitlePlus" / "desktop" / "state.json"
+        self.legacy_path = None
+        if path is None and sys.platform == "darwin" and "LOCALAPPDATA" not in os.environ:
+            self.legacy_path = Path.home() / ".cache/AutoSubtitlePlus/desktop/state.json"
 
     def load(self) -> tuple[dict, list[QueueItem]]:
+        path = self.path
+        if not path.exists() and self.legacy_path is not None:
+            path = self.legacy_path
         try:
-            if self.path.stat().st_size > 2_000_000:
+            if path.stat().st_size > 2_000_000:
                 return {}, []
-            data = json.loads(self.path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8"))
             if not isinstance(data, dict) or data.get("version") != 1:
                 return {}, []
             items = []

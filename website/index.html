@@ -4,21 +4,21 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#101218">
-  <title>Auto Subtitle Plus — Free AI Subtitle Generator for Windows</title>
-  <meta name="description" content="Generate and translate subtitles on your PC with Auto Subtitle Plus. A free Windows desktop app with a file queue, local AI models and a powerful CLI.">
+  <title>Auto Subtitle Plus — Free AI Subtitle Generator for Mac and Windows</title>
+  <meta name="description" content="Generate and translate subtitles on your Mac or PC with Auto Subtitle Plus. A free Mac and Windows desktop app with a file queue, local AI models and a powerful CLI.">
   <link rel="canonical" href="https://sectumsempra82.github.io/auto-subtitle-plus/">
   <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="./styles.css">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_US">
   <meta property="og:title" content="Auto Subtitle Plus — Your words. In subtitles.">
-  <meta property="og:description" content="Turn video and audio into subtitles with a free Windows desktop app. Local AI, optional translation, and a CLI for your workflow.">
+  <meta property="og:description" content="Turn video and audio into subtitles with a free Mac and Windows desktop app. Local AI, optional translation, and a CLI for your workflow.">
   <meta property="og:url" content="https://sectumsempra82.github.io/auto-subtitle-plus/">
   <meta property="og:image" content="https://sectumsempra82.github.io/auto-subtitle-plus/assets/desktop-queue.png">
   <meta property="og:image:alt" content="Auto Subtitle Plus desktop app with three media files in its queue">
   <meta name="twitter:card" content="summary_large_image">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Auto Subtitle Plus","applicationCategory":"MultimediaApplication","operatingSystem":"Windows 10, Windows 11 (x64)","url":"https://sectumsempra82.github.io/auto-subtitle-plus/","description":"A desktop and command-line application for generating, translating and exporting subtitles from local video and audio files.","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"screenshot":"https://sectumsempra82.github.io/auto-subtitle-plus/assets/desktop-queue.png"}
+  {"@context":"https://schema.org","@type":"SoftwareApplication","name":"Auto Subtitle Plus","applicationCategory":"MultimediaApplication","operatingSystem":"macOS 26+ (Apple Silicon), Windows 10/11 (x64)","url":"https://sectumsempra82.github.io/auto-subtitle-plus/","description":"A desktop and command-line application for generating, translating and exporting subtitles from local video and audio files.","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"screenshot":"https://sectumsempra82.github.io/auto-subtitle-plus/assets/desktop-queue.png"}
   </script>
   <script src="./release.js" defer></script>
 </head>
@@ -32,15 +32,15 @@
   </header>
   <main id="main">
     <section class="hero wrap" aria-labelledby="hero-title">
-      <a class="release-badge" data-release-notes href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2"><span class="status-dot" aria-hidden="true"></span><span data-release-label>v0.3.0-rc.2 · Pre-release</span><span aria-hidden="true">↗</span></a>
+      <a class="release-badge" data-release-notes href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2"><span class="status-dot" aria-hidden="true"></span>Windows · <span data-release-label>v0.3.0-rc.2 · Pre-release</span><span aria-hidden="true">↗</span></a>
       <p class="eyebrow">FREE AI SUBTITLE GENERATOR</p>
       <h1 id="hero-title">Your words.<br><span>In subtitles.</span></h1>
-      <p class="hero-copy">Turn video and audio into subtitles, right on your PC.<br class="desktop-break"> Queue your files, choose a language, and let local AI do the typing.</p>
+      <p class="hero-copy">Turn video and audio into subtitles, right on your Mac or PC.<br class="desktop-break"> Queue your files, choose a language, and let local AI do the typing.</p>
       <div class="actions">
         <a class="button primary" data-download="GUI" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-GUI-Windows-x64.zip"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5"/></svg>Download for Windows</a>
-        <a class="button secondary" href="#desktop">Explore the app <span aria-hidden="true">↓</span></a>
+        <a class="button secondary" data-download="macOS" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.3/AutoSubtitlePlus-GUI-macOS-arm64.zip">Download for Mac <span aria-hidden="true">↓</span></a>
       </div>
-      <p class="download-note">Windows 10 / 11 · x64 · Free download<br><span>First launch downloads dependencies. Models download when selected.</span></p>
+      <p class="download-note">Windows x64 · macOS Apple Silicon · Free downloads<br><span>Mac: Python bundled; FFmpeg required. Windows: runtime downloads on first launch.</span><br><a href="./guide/#macos">Mac setup and first-launch help →</a></p>
       <figure class="app-frame" id="desktop">
         <div class="frame-bar"><span><i></i><i></i><i></i></span><span>YOUR SUBTITLE WORKSPACE</span><span class="frame-tag">Desktop app</span></div>
         <a href="./assets/desktop-queue.png" aria-label="View the desktop queue screenshot at full size"><img src="./assets/desktop-queue.png" width="1650" height="1170" alt="Auto Subtitle Plus GUI: an interview, lecture and voice memo queued alongside speech model, language and device settings" fetchpriority="high" decoding="async"></a>
@@ -48,15 +48,23 @@
       </figure>
       <div class="benefits" aria-label="Highlights"><span><b aria-hidden="true">✓</b> Local AI processing</span><span><b aria-hidden="true">✓</b> No Python setup</span><span><b aria-hidden="true">✓</b> GUI + CLI</span><span><b aria-hidden="true">✓</b> Open source</span></div>
     </section>
+    <section class="section wrap" id="macos" aria-labelledby="macos-title">
+      <div class="section-heading"><p class="eyebrow">NOW ON MAC</p><h2 id="macos-title">A native workspace.<br>Local to your Mac.</h2><p>Native light and dark appearance, Finder file opening, and Command shortcuts. Apple Silicon · macOS 26+ · CPU processing.</p></div>
+      <figure class="app-frame"><a href="./assets/desktop-macos.png"><img src="./assets/desktop-macos.png" width="2200" height="1560" alt="Mac desktop preview with a local media queue and unclipped native Speech, Translate, Layout, Files and System tabs" loading="lazy" decoding="async"></a><figcaption>Actual Mac app · example files</figcaption></figure>
+      <p>The Mac preview bundles Python and processing libraries. Install FFmpeg separately; models download when selected. Processing and translation stay local. CUDA and Hy-MT2 are not available on Mac.</p>
+      <p>Ad-hoc signed, not notarized. Tested on macOS 26.5; other macOS versions and Intel Macs are unvalidated. <a href="./guide/#macos">Read the setup guide</a> before your first launch.</p>
+      <a class="button primary" data-download="macOS" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.3/AutoSubtitlePlus-GUI-macOS-arm64.zip">Download Mac preview ↓</a>
+      <p><span data-release-label="macOS">v0.3.0-rc.3 · Pre-release</span> · <a data-release-notes="macOS" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.3">Mac release notes &amp; checksums ↗</a></p>
+    </section>
     <section class="section wrap" id="features" aria-labelledby="features-title">
       <div class="section-heading"><p class="eyebrow">LESS TYPING. MORE CREATING.</p><h2 id="features-title">From media to subtitles.<br>Without the busywork.</h2><p>A focused desktop workspace with hover help for settings and controls, plus direct links to the user guide.</p></div>
       <div class="feature-grid">
         <article><span class="feature-icon" aria-hidden="true">≡</span><h3>Drop it. Queue it. Go.</h3><p>Add videos, audio files or a local folder. Reorder your queue, pause after a file, cancel a job or retry a failed item.</p></article>
-        <article><span class="feature-icon" aria-hidden="true">✦</span><h3>Powered by local AI</h3><p>Choose Whisper / Stable-TS or Faster-Whisper. Use your CPU, or configure CUDA for a compatible NVIDIA GPU.</p></article>
+        <article><span class="feature-icon" aria-hidden="true">✦</span><h3>Powered by local AI</h3><p>Choose Whisper / Stable-TS or Faster-Whisper. Use your CPU, or configure CUDA on Windows for a compatible NVIDIA GPU.</p></article>
         <article><span class="feature-icon" aria-hidden="true">↗</span><h3>Export your way</h3><p>Save SRT or VTT subtitles and TXT transcripts. Burn captions into a video or keep soft subtitles in an MKV.</p></article>
         <article><span class="feature-icon" aria-hidden="true">Aa</span><h3>Make captions readable</h3><p>Adjust line length, line count, reading speed and caption duration. Fine-tune the output for your audience.</p></article>
         <article><span class="feature-icon" aria-hidden="true">◴</span><h3>Keep an eye on progress</h3><p>Follow each processing stage, browse outputs and see resource usage. Your queue and settings persist between sessions.</p></article>
-        <article><span class="feature-icon" aria-hidden="true">⌁</span><h3>Ready to work offline</h3><p>Download the dependencies and models first, then reuse them offline with local engines. Online translation is optional.</p></article>
+        <article><span class="feature-icon" aria-hidden="true">⌁</span><h3>Ready to work offline</h3><p>Download the dependencies and models first, then reuse them offline with local engines. Online translation is optional on Windows; the Mac GUI uses local engines.</p></article>
       </div>
     </section>
     <section class="translation section wrap" aria-labelledby="translate-title">
@@ -80,7 +88,8 @@
     </section>
     <section class="get-started section wrap" id="download" aria-labelledby="download-title">
       <p class="eyebrow">LET YOUR WORDS TRAVEL.</p><h2 id="download-title">Your next video.<br>Already more accessible.</h2><p>Download the ZIP, extract the entire folder, and launch<br class="desktop-break"> <code>auto_subtitle_plus_gui.exe</code>. No existing Python installation needed.</p>
-      <a class="button primary" data-download="GUI" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-GUI-Windows-x64.zip">Get Auto Subtitle Plus <span aria-hidden="true">↓</span></a>
+      <a class="button primary" data-download="GUI" href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-GUI-Windows-x64.zip">Get Windows desktop <span aria-hidden="true">↓</span></a>
+      <a class="button secondary" href="#macos">Get Mac preview ↓</a>
       <p class="release-detail"><span data-release-label>v0.3.0-rc.2 · Pre-release</span> · Windows x64<br><a data-release-notes href="https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2">Release notes &amp; checksums ↗</a><br><a href="./guide/#getting-started">Need a hand? Follow the setup guide →</a></p>
       <details><summary>Before your first launch</summary><div><p>Internet is needed for the initial dependency and model downloads. Allow several GB of disk space; the small launcher ZIP does not include the processing runtime or model weights. Preserve the app’s <code>data</code> folder when upgrading.</p><p>CPU is the initial profile. GPU processing requires a compatible NVIDIA driver and the optional <code>Setup CUDA.cmd</code> step.</p><p>The v0.3.0-rc.2 executables are unsigned, so Windows may show a SmartScreen warning. See your release’s notes for validation status and known limitations.</p></div></details>
     </section>

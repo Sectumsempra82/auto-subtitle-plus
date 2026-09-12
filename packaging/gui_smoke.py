@@ -40,6 +40,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--smoke-media", default=None, help="Optional media file to enqueue in the real MainWindow")
     parser.add_argument("--smoke-output-dir", default=None, help="Output directory to validate in GUI settings")
     parser.add_argument("--smoke-asr-model", default=None, help="ASR model name or absolute local snapshot path for GUI settings validation")
+    parser.add_argument("--smoke-backend", choices=("stable", "faster"), default="faster")
+    parser.add_argument("--smoke-no-translation", action="store_true", help="Validate transcription without downloading translation models")
     parser.add_argument("--smoke-translation-cache-dir", default=None, help="Local translation cache root for GUI settings validation")
     parser.add_argument("--smoke-timeout-ms", type=int, default=5000, help="Maximum Qt event loop duration")
     return parser
@@ -180,9 +182,9 @@ def smoke_settings(args: argparse.Namespace) -> dict[str, Any]:
     if args.smoke_output_dir:
         settings.update({"output_location": "folder", "output_dir": str(Path(args.smoke_output_dir).resolve())})
     if args.smoke_asr_model:
-        settings.update({"backend": "faster", "model": args.smoke_asr_model, "device": "cpu", "compute_type": "int8"})
+        settings.update({"backend": args.smoke_backend, "model": args.smoke_asr_model, "device": "cpu", "compute_type": "int8"})
     if args.smoke_media:
-        settings.update({"language": "en", "translate_enabled": True, "translate_to": "fr", "translation_engine": "local",
+        settings.update({"language": "en", "translate_enabled": not args.smoke_no_translation, "translate_to": "fr", "translation_engine": "local",
                          "translation_model": "opus-en-fr", "translation_device": "cpu", "output_srt": True,
                          "output_txt": True, "offline": True, "overwrite": False})
     if args.smoke_translation_cache_dir:

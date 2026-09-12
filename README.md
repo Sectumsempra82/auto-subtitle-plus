@@ -6,6 +6,22 @@ Auto Subtitle Plus generates subtitles for video or audio files, can optionally 
 
 This fork keeps original-language subtitles as the default. Translation only happens when `--translate-to` is provided, and bilingual output only happens when `--bilingual` is provided.
 
+## macOS desktop preview
+
+[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.3/AutoSubtitlePlus-GUI-macOS-arm64.zip) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.3) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
+
+**v0.3.0-rc.3** includes a native macOS `.app` with Python and processing libraries bundled. Extract it, move it to Applications, and install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; tested on macOS 26.5. Intel Macs and older macOS versions have not been validated.
+
+The app is ad-hoc signed, **not Developer ID signed or notarized**. If macOS blocks its first launch, use Privacy & Security → Open Anyway only after verifying the download and deciding you trust it. Do not disable system protection.
+
+The Mac GUI processes local files and offers local translation only. Model weights download on first use; cached models work offline. Start with CPU. CUDA and Windows-only Hy-MT2 are rejected before a job starts. The default local translation model is M2M100-418M. No accounts or cloud service are required.
+
+Native tabs follow light/dark appearance, Finder can open media in the app, and Command shortcuts control files and the queue. Settings and queue state live in `~/Library/Application Support/AutoSubtitlePlus/desktop/state.json`; models stay outside the app. Replacing the app preserves them.
+
+![macOS desktop with native settings tabs](assets/screenshots/desktop-macos.png)
+
+[Build and validation instructions](packaging/macos.md). The existing [Windows GUI and CLI downloads remain v0.3.0-rc.2](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2); this release does not contain rebuilt Windows executables.
+
 ## CLI And Desktop
 
 ### Screenshots
@@ -49,14 +65,14 @@ Queue actions, progress indicators, output files and resource meters also provid
 hover help. Each settings tab has a clickable guide link, and **Queue guide**
 opens the [desktop and queue manual](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#queue).
 These links open your browser; the tooltips themselves work offline.
-The tabs expose the supported backend/model/device options, local or explicitly
+The tabs expose the supported backend/model/device options, local or, on Windows, explicitly
 online translation, direct/pivot routing, context/glossary, caption readability,
 all output formats, offline mode, stage retries, and cache location/clearing.
 Legacy no-op translation worker flags are intentionally not GUI controls.
 Desktop output defaults beside each source file; replacement is off by default
 and requires confirmation when enabled. CLI output defaults remain unchanged.
 
-Queue/settings state is stored in `%LOCALAPPDATA%\AutoSubtitlePlus\desktop`.
+On Windows, queue/settings state is stored in `%LOCALAPPDATA%\AutoSubtitlePlus\desktop`.
 Restoring a queue never starts it automatically. Active jobs interrupted by a
 restart are marked interrupted. Queue state contains local filenames; it is
 not uploaded or included in Git.

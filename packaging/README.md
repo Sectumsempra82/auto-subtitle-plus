@@ -107,3 +107,7 @@ is newly used (MIT). Whisper/Stable-TS wheels preserve their upstream licenses.
 Public redistribution of prepared data requires a separate license review.
 The old `tools/build_windows.py` / `windows.spec` are retained only as the
 superseded full-bundle validation path; the rebuild shortcut no longer calls them.
+
+## macOS Apple Silicon
+
+The Mac preview uses a bundled `.app`, independently of the Windows bootstrap ZIPs. See [Mac packaging and validation](macos.md) and [release notes](RELEASE-v0.3.0-rc.3.md). FFmpeg remains a separate prerequisite.

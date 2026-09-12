@@ -2,6 +2,7 @@ import importlib.util
 import hashlib
 import io
 import json
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -58,6 +59,7 @@ class BootstrapTests(unittest.TestCase):
             self.assertFalse((path / "package.whl").exists())
             self.assertFalse((path / "package.whl.partial").exists())
 
+    @unittest.skipUnless(sys.platform == "win32", "Windows bootstrap uses msvcrt locking")
     def test_concurrent_setup_waits_then_releases_lock(self):
         with tempfile.TemporaryDirectory() as temp:
             with patch("msvcrt.locking", side_effect=[OSError("busy"), None, None]) as locking, patch.object(bootstrap.time, "sleep") as sleep:

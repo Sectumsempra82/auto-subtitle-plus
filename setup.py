@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    version="0.3.0rc2",
+    version="0.3.0rc3",
     name="auto_subtitle_plus",
     packages=find_packages(),
     py_modules=["auto_subtitle_plus"],

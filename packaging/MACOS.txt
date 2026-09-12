@@ -1,0 +1,40 @@
+Auto Subtitle Plus v0.3.0-rc.3 — Apple Silicon macOS preview
+
+Extract the ZIP and move Auto Subtitle Plus.app to Applications. Requires macOS
+26 or newer on Apple Silicon and FFmpeg/ffprobe on PATH, /opt/homebrew/bin or
+/usr/local/bin. For Homebrew users: brew install ffmpeg
+Python, Qt and processing libraries are bundled; model weights are not.
+Internet is needed to acquire models. Cached models support offline processing.
+The Mac GUI offers local processing and local translation only. Start with CPU;
+CUDA and Hy-MT2 are not supported by this Mac preview.
+
+The app is ad-hoc signed, not Developer ID signed or notarized. macOS may block
+its first launch. Only if you trust this download, use System Settings > Privacy
+& Security > Open Anyway after attempting to open it. Do not disable Gatekeeper.
+Validated on an Apple Silicon Mac running macOS 26.5; older supported versions
+and Intel Macs have not been validated. This is a release candidate.
+
+Settings/queue: ~/Library/Application Support/AutoSubtitlePlus/desktop/state.json
+Model caches normally use ~/.cache; configured cache paths remain supported.
+Your media, settings and models are not included in the distributed package.
+
+Source, build instructions and release notes:
+https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.3
+https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.3/packaging/macos.md
+
+Third-party notices and the build dependency inventory are in this directory.
+Qt/PySide6 uses LGPLv3/GPLv3 terms; other libraries retain their own licenses.
+Qt libraries remain dynamically linked in Contents/Frameworks and can be
+replaced/rebuilt; modifying the bundle requires re-signing it (ad-hoc signing
+is sufficient). Reverse engineering for debugging modifications to LGPL
+libraries is permitted. Qt/PySide matching upstream source is available at:
+https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.11.2-src/
+https://download.qt.io/official_releases/qt/6.11/6.11.2/submodules/
+Python source: https://www.python.org/downloads/source/
+PyAV bundles FFmpeg 8.1.2 libraries with GPL codecs, including x264 and x265.
+These components retain their GPL/LGPL terms; the application source remains
+MIT licensed. The GPL-covered combined distribution is provided under GPLv3
+terms, with no warranty. Matching native sources, upstream build scripts and
+checksums are supplied as AutoSubtitlePlus-macOS-NativeSources.tar beside this
+binary release. Application build scripts are in the tagged source above.
+FFmpeg command-line executables and model weights are separate installations.

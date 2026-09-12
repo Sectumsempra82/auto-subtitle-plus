@@ -152,7 +152,7 @@ class GuiApiContractTests(unittest.TestCase):
                     "translate_enabled": True,
                     "language": "en",
                     "translate_to": "fr",
-                    "translation_model": "hy-mt2-1.8b-q8",
+                    "translation_model": "m2m100-418m",
                     "translation_device": "cpu",
                     "context": "formal tone",
                     "glossary_text": '{"hello": "bonjour"}',

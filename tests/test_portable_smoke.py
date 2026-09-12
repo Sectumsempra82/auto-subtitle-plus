@@ -51,7 +51,7 @@ class PortableSmokeTests(unittest.TestCase):
             fake_exe = Path(tmp) / "fake.exe"
             output_dir = Path(tmp) / "out"
             fake_exe.write_text(
-                "#!/usr/bin/env python\n"
+                f"#!{sys.executable}\n"
                 "import sys\n"
                 "args = set(sys.argv[1:])\n"
                 "if '--help' in args:\n"
