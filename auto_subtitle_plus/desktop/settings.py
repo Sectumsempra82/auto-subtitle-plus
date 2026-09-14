@@ -6,7 +6,7 @@ import sys
 from html import escape
 from typing import Any
 
-from PySide6.QtCore import Qt, QUrl, Signal
+from PySide6.QtCore import QSize, Qt, QUrl, Signal
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import (
     QApplication,
@@ -29,6 +29,7 @@ from PySide6.QtWidgets import (
 
 from ..model_manager import LANGUAGES, list_models, normalize_language, source_dir
 from ..processing import default_processing_values
+from .guidance import HARDWARE_GUIDE, TAB_GUIDANCE
 
 
 ASR_MODELS = ("tiny", "base", "small", "medium", "large-v3", "turbo", "distil-large-v3.5")
@@ -85,6 +86,11 @@ OPTION_KEYS = (
     "glossary",
     "overwrite",
 )
+
+
+class HelpLabel(QLabel):
+    def sizeHint(self) -> QSize:
+        return QSize(0, super().sizeHint().height())
 
 
 class SettingsPanel(QWidget):
@@ -293,6 +299,22 @@ class SettingsPanel(QWidget):
         form.addRow("Word timestamps", self.word_timestamps)
         form.addRow("Enhance consistency", self.enhance_consistency)
         form.addRow("", self.asr_validation)
+        self.speech_advice = self._help_label("")
+        form.addRow(self.speech_advice)
+        self.hardware_help_button = QPushButton("Hardware guide")
+        self.hardware_help_button.setCheckable(True)
+        self.hardware_help_button.setToolTip("Show or hide the built-in hardware guide. No internet connection is needed to read it.")
+        form.addRow(self.hardware_help_button)
+        platform_help = (
+            "<b>macOS:</b> Use CPU or Auto. This desktop workflow does not support Apple GPU acceleration or CUDA. "
+            "Apple unified memory is not a separate NVIDIA VRAM budget. With faster, start with int8 on CPU; large models can be slow.<br><br>"
+            if sys.platform == "darwin" else ""
+        )
+        self.hardware_help = self._help_label(platform_help + HARDWARE_GUIDE)
+        self.hardware_help.setOpenExternalLinks(True)
+        self.hardware_help.hide()
+        self.hardware_help_button.toggled.connect(self.hardware_help.setVisible)
+        form.addRow(self.hardware_help)
 
     def _build_translate_tab(self) -> None:
         form = self._form_tab("Translate")
@@ -410,6 +432,15 @@ class SettingsPanel(QWidget):
         self.browse_cache_dir.clicked.connect(lambda: self._browse_directory(self.translation_cache_dir))
         self.clear_cache.clicked.connect(self.clear_cache_requested.emit)
 
+    @staticmethod
+    def _help_label(text: str) -> QLabel:
+        label = HelpLabel(text)
+        label.setWordWrap(True)
+        label.setMinimumWidth(0)
+        label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        return label
+
     def _form_tab(self, title: str) -> QFormLayout:
         page = QWidget()
         page.setMinimumWidth(0)
@@ -417,8 +448,9 @@ class SettingsPanel(QWidget):
         form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         form.setLabelAlignment(form.labelAlignment())
-        form.setHorizontalSpacing(8)
+        form.setHorizontalSpacing(4)
         form.setVerticalSpacing(6)
+        form.addRow(self._help_label(TAB_GUIDANCE[title]))
         scroll = QScrollArea()
         scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         scroll.setWidgetResizable(True)
@@ -438,7 +470,7 @@ class SettingsPanel(QWidget):
             "inference_batch_size": "Faster backend only: speech chunks processed together, not queue files. Values above 1 require VAD and cannot use Enhance consistency. Larger batches need more memory.",
             "vad": "Faster backend only: voice activity detection filters non-speech audio. Required for inference batches above 1. Useful for long silences; review quiet speech after enabling it.",
             "word_timestamps": "Request individual word timing from the speech backend. This provides finer timing information, not animated word-by-word captions.",
-            "enhance_consistency": "Condition recognition on previous text for continuity. This can increase repetition on difficult audio or silence. Unsupported with Faster inference batches above 1.",
+            "enhance_consistency": "Use previously transcribed text as context for the next segment. May keep names, terminology and phrasing consistent in clean lectures or interviews. Mistakes can carry forward and cause repetition on noisy audio or silence. Start off; try on for continuous speech and turn off if phrases repeat. Works with faster at batch 1 only. This is not a general accuracy boost.",
             "asr_validation": "Compatibility issues between the selected speech model and backend. Resolve these before starting the queue.",
             "translate_enabled": "Translate the source transcript into the target language after speech recognition. Leave off to keep subtitles in the spoken language.",
             "translate_to": "Language for the final translated subtitles. Enable Translate first. Available local models also depend on the source language and route.",
@@ -479,10 +511,48 @@ class SettingsPanel(QWidget):
             "browse_cache_dir": "Choose the translation cache location. Existing models and cached stages are not moved automatically.",
             "clear_cache": "While idle, ask before deleting cached source transcripts and translation stages. Downloaded models and runtimes remain. Cleared transcripts will no longer be available to Retry translation.",
         }
+        help_text["backend"] += " The model determines what recognizes speech; the backend determines how it runs. faster uses CTranslate2 for lower memory use and often higher speed. stable uses OpenAI Whisper with Stable-TS. Neither name guarantees accuracy; compare a short clip. Compute type, batching and VAD below only apply to faster."
+        help_text["model"] += " For an 8 GB NVIDIA GPU, try large-v3 with faster, CUDA, int8_float16 and batch 1. This is a starting point, not a fit guarantee. See the built-in memory guide for estimates."
+        help_text["compute_type"] += " Start with int8_float16 for an 8 GB NVIDIA GPU, or int8 on CPU. float16 is a good GPU option with more free VRAM. float32 costs more memory; it is not a quality upgrade. Quantization may slightly change results. Auto does not guarantee that the model fits."
+        help_text["inference_batch_size"] += " Start at 1, especially with large-v3 on 8 GB. Increase gradually for throughput after a successful run. Batch 1 allows Enhance consistency."
+        help_text["vad"] += " Leave off for an initial comparison or enable for recordings with long silences. If quiet words disappear, try disabling it at batch 1. It does not remove background noise or separate speakers."
+        help_text["word_timestamps"] += " May add processing time and memory. Enable when you need finer timing; it does not improve recognition accuracy by itself."
+        if sys.platform == "darwin":
+            help_text["device"] = "On macOS choose CPU or Auto. This app does not support Apple GPU acceleration or CUDA in this workflow. Processing uses system/unified RAM, not dedicated NVIDIA VRAM. Larger models can be slow."
+            help_text["compute_type"] = "Faster backend only. On macOS CPU, start with int8 or auto; float32 is another CPU option but uses more memory. float16 and int8_float16 are GPU-oriented and should not be selected for this Mac CPU workflow."
+            help_text["translation_device"] = "On macOS choose CPU or auto for local translation. CUDA and Apple GPU acceleration are not supported in this desktop workflow. Translation models use system memory independently of the speech model."
         for name, text in help_text.items():
             widget = getattr(self, name)
             widget.setToolTip(f"<qt>{escape(text)}</qt>")
             widget.setAccessibleDescription(text)
+        option_help = {
+            "backend": {
+                "stable": "OpenAI Whisper with Stable-TS timing. Compute type, batching and VAD controls below do not apply.",
+                "faster": "CTranslate2 engine: often faster and more memory efficient. Supports compute type, VAD and batching; caption timing may differ from stable.",
+            },
+            "compute_type": {
+                "auto": "Let the engine select a supported precision. Does not guarantee that the model fits in memory.",
+                "float16": "Half precision: a good compatible NVIDIA GPU option when enough VRAM is free. Avoid for this app's CPU workflow.",
+                "int8": "8-bit quantization: start here for CPU memory efficiency. Also supported on some GPUs; results can differ slightly.",
+                "int8_float16": "8-bit weights with half-precision computation: a useful NVIDIA GPU starting point with limited VRAM, including 8 GB cards.",
+                "float32": "Full precision: a CPU compatibility option with higher memory use. Not a general accuracy upgrade.",
+            },
+            "model": {
+                "tiny": "Smallest model: quick checks and limited hardware; review recognition quality carefully.",
+                "base": "Lightweight model for fast drafts. May miss speech that larger models recognize.",
+                "small": "Practical starting point on CPU or limited GPU memory.",
+                "medium": "More capacity than small, with more memory and processing time. OpenAI's GPU reference is about 5 GB; backend matters.",
+                "large-v3": "Full large multilingual model. On an 8 GB NVIDIA GPU, start with faster, int8_float16 and batch 1. See the memory guide for estimates and caveats.",
+                "turbo": "A faster large-v3 variant. Useful when speed matters; compare recognition quality on your language and recording.",
+                "distil-large-v3.5": "English-only choice in this app; requires faster. Select English as the audio language for English recordings.",
+            },
+        }
+        for name, descriptions in option_help.items():
+            combo = getattr(self, name)
+            current_text = combo.currentText()
+            for index in range(combo.count()):
+                combo.setItemData(index, descriptions.get(combo.itemText(index), ""), Qt.ItemDataRole.ToolTipRole)
+            combo.setCurrentText(current_text)
         for index in range(self.tabs.count()):
             form = self.tabs.widget(index).widget().layout()
             for row in range(form.rowCount()):
@@ -573,6 +643,24 @@ class SettingsPanel(QWidget):
 
     def _sync_controls(self) -> None:
         faster = self.backend.currentText() == "faster"
+        advice: list[str] = []
+        if sys.platform == "darwin":
+            advice.append("Mac: choose CPU or Auto; Apple GPU acceleration and CUDA are not supported here. With faster, start with int8 on CPU.")
+        elif self._combo_data(self.device) == "cpu":
+            advice.append("CPU uses system RAM. With faster, start with int8; large-v3 may be slow. GPU VRAM estimates do not apply.")
+        else:
+            advice.append("8 GB NVIDIA starting point: faster + large-v3 + CUDA + int8_float16 + batch 1. Leave room for other apps; this is not a fit guarantee.")
+        if not faster:
+            advice.append("stable uses Whisper with Stable-TS; compute type, batching and VAD are unavailable. OpenAI's large-model reference is about 10 GB VRAM; actual use varies.")
+        elif self.inference_batch_size.value() > 1:
+            advice.append("Batching uses more memory. Enable VAD and turn off Enhance consistency before starting.")
+        if faster and self.compute_type.currentText() in ("float16", "int8_float16") and (sys.platform == "darwin" or self._combo_data(self.device) == "cpu"):
+            advice.append("Selected compute type is GPU-oriented. For CPU, choose int8, auto or float32.")
+        if self.enhance_consistency.isChecked():
+            advice.append("Consistency uses earlier text as context. Review for repeated phrases or carried-over mistakes; turn it off if these occur.")
+        else:
+            advice.append("Consistency is off: a good starting point. Try it for clean continuous speech if names or terminology vary between segments.")
+        self.speech_advice.setText("\n\n".join(advice))
         for widget in (self.compute_type, self.inference_batch_size, self.vad):
             widget.setEnabled(faster)
         self.asr_validation.setText(

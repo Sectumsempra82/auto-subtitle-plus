@@ -241,6 +241,31 @@ class SettingsPanelTests(unittest.TestCase):
 
         self.assertEqual(emitted, [True])
 
+    def test_hardware_help_and_advice_preserve_processing_options(self):
+        panel = SettingsPanel()
+        panel.restore({"backend": "faster", "model": "large-v3", "device": "cuda", "compute_type": "int8_float16"})
+        before = panel.options()
+        panel.hardware_help_button.click()
+        self.assertFalse(panel.hardware_help.isHidden())
+        self.assertEqual(panel.options(), before)
+        panel.hardware_help_button.click()
+        self.assertTrue(panel.hardware_help.isHidden())
+        panel.device.setCurrentIndex(panel.device.findData("cpu"))
+        self.assertIn("GPU-oriented", panel.speech_advice.text())
+        panel.compute_type.setCurrentText("int8")
+        self.assertNotIn("GPU-oriented", panel.speech_advice.text())
+        panel.enhance_consistency.setChecked(True)
+        self.assertIn("carried-over mistakes", panel.speech_advice.text())
+
+    def test_mac_guidance_explains_cpu_without_changing_defaults(self):
+        with mock.patch("auto_subtitle_plus.desktop.settings.sys.platform", "darwin"):
+            panel = SettingsPanel()
+            self.assertIn("Apple GPU acceleration", panel.speech_advice.text())
+            self.assertIn("unified memory", panel.hardware_help.text())
+            self.assertIn("int8", panel.compute_type.toolTip())
+            self.assertEqual(panel.options()["model"], "small")
+            self.assertEqual(panel.options()["compute_type"], "auto")
+
     def test_narrow_render_has_no_horizontal_scroll_or_tab_overflow(self):
         panel = SettingsPanel()
         panel.restore(

@@ -233,10 +233,10 @@ class ResourceStrip(QFrame):
             gpu = gpus[0]
             percent = gpu.get("utilization")
             self._set("gpu", f"{percent:.0f}% load" if percent is not None else "Load unavailable", f"{byte_text(gpu.get('used'))} / {byte_text(gpu.get('total'))}", percent)
-            self.meters["gpu"][3].setToolTip("\n".join(str(g.get("name", "GPU")) for g in gpus) + "\nDevice-wide usage, including other applications.")
+            self.meters["gpu"][3].setToolTip("\n".join(str(g.get("name", "GPU")) for g in gpus) + "\nDevice-wide usage, including other applications.\nThe percentage is GPU activity; used / total is VRAM, not system RAM. Free VRAM is total minus used.\nIf a model runs out of memory, try inference batch 1, faster with int8_float16, or a smaller model. See Speech for the built-in hardware guide.")
         else:
             self._set("gpu", "Unavailable", "No supported telemetry", None)
-            self.meters["gpu"][3].setToolTip(sample.get("gpu_error") or "GPU monitoring unavailable")
+            self.meters["gpu"][3].setToolTip((sample.get("gpu_error") or "GPU monitoring unavailable") + "\nUnavailable does not mean zero usage or prove GPU processing is unavailable. On Mac, this workflow uses CPU; see Speech for platform guidance.")
         rx, tx = sample.get("network_rx_rate"), sample.get("network_tx_rate")
         self._set("network", f"Down {byte_text(rx)}/s", f"Up {byte_text(tx)}/s", 0)
         self.network_totals.setText(f"Total {byte_text(sample.get('network_rx_total'))} in / {byte_text(sample.get('network_tx_total'))} out")
