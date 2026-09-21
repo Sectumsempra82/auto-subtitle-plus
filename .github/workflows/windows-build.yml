@@ -36,7 +36,23 @@ jobs:
         shell: pwsh
         env:
           QT_QPA_FONTDIR: C:\Windows\Fonts
-        run: python -m unittest discover -s tests -q
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $ciTemp = Join-Path $env:GITHUB_WORKSPACE '.ci-temp'
+          New-Item -ItemType Directory -Force -Path $ciTemp | Out-Null
+          $env:TEMP = $ciTemp
+          $env:TMP = $ciTemp
+          python -m unittest discover -s tests -q 2>&1 | Tee-Object -FilePath regression-tests.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-log-${{ github.sha }}
+          path: regression-tests.log
+          if-no-files-found: warn
+          retention-days: 14
 
       - name: Build Windows x64 CLI and GUI
         shell: pwsh

@@ -121,11 +121,12 @@ def default_cache_dir() -> str:
 
 
 def clear_translation_cache(cache_dir: str | None = None) -> None:
-    root = Path(cache_dir or default_cache_dir()).resolve()
+    root = Path(cache_dir or default_cache_dir())
+    resolved_root = root.resolve()
     for stage in ("source", "translation", "layout"):
         stage_dir = (root / stage).resolve()
-        if not stage_dir.is_relative_to(root):
-            raise TranslationConfigError(f"Refusing to clear cache outside {root}")
+        if not stage_dir.is_relative_to(resolved_root):
+            raise TranslationConfigError(f"Refusing to clear cache outside {resolved_root}")
         if stage_dir.is_dir():
             shutil.rmtree(stage_dir)
 
