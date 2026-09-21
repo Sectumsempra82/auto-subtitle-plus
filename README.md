@@ -4,6 +4,16 @@
 
 Auto Subtitle Plus generates subtitles and editable text transcripts from video or audio files. It can optionally translate the text and embed subtitles back into video outputs.
 
+## Downloads
+
+Latest compiled builds:
+
+- [Windows x64 CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-CLI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-CLI-Windows-x64.zip.sha256)
+- [Windows x64 GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-GUI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-GUI-Windows-x64.zip.sha256)
+- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.4/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
+
+[Latest tagged release](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest) · [All release assets and checksums](https://github.com/Sectumsempra82/auto-subtitle-plus/releases) · [Latest continuous Windows build](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/continuous)
+
 This fork keeps original-language subtitles as the default. Translation only happens when `--translate-to` is provided, and bilingual output only happens when `--bilingual` is provided.
 
 ## Subtitles first. Text transcripts too.
@@ -79,7 +89,7 @@ Native tabs follow light/dark appearance, Finder can open media in the app, and 
 
 ![macOS desktop with native settings tabs](assets/screenshots/desktop-macos.png)
 
-[Build and validation instructions](packaging/macos.md). The existing [Windows GUI and CLI downloads remain v0.3.0-rc.5](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5); this release does not contain rebuilt Windows executables.
+[Build and validation instructions](packaging/macos.md). Windows compiled downloads are listed in the [Downloads](#downloads) section above.
 
 ## CLI And Desktop
 
