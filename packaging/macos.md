@@ -13,7 +13,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[gui,faster]'
 .venv/bin/python -m pip install 'pyinstaller==6.22.2'
 .venv/bin/python tools/package_macos_sources.py
-.venv/bin/python tools/package_macos.py --build-number 6
+.venv/bin/python tools/package_macos.py --build-number 7
 ```
 
 Outputs:
@@ -27,7 +27,7 @@ Outputs:
 
 Use a positive, monotonically increasing `--build-number` for every distributed
 Mac build, including rebuilds and release candidates. Existing ZIP releases use
-build 3; build 4 was a local installer prototype; rc.4 used build 5. The rc.7 release uses build 6. The number becomes the app's
+build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used build 6; rc.8 uses build 7. The number becomes the app's
 `CFBundleVersion` and the installer receipt version. Keep increasing it across
 marketing-version changes; do not reuse or reset it. Update the app's marketing
 version in `macos.spec` when preparing a new version as before.
@@ -44,7 +44,7 @@ Qt and PySide6 remain dynamically linked. Their LGPL/GPL notices and matching so
 
 Publish the `.pkg` and its checksum alongside the ZIP and required native sources.
 The website prefers a PKG when the newest Mac release contains one and falls back
-to ZIP for older releases. Static download links point to the rc.7 installer, so they also work when the
+to ZIP for older releases. Static download links point to the rc.8 installer, so they also work when the
 GitHub release API is unavailable.
 
 The user downloads the PKG, finishes their current job, quits the app and follows
