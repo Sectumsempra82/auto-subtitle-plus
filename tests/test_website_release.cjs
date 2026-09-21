@@ -7,7 +7,7 @@ const asset = (tag, name) => ({name, browser_download_url: `${prefix}${tag}/${na
 const win = {tag_name:'win', published_at:'2026-09-10', assets:['GUI','CLI'].map(x => asset('win', `AutoSubtitlePlus-${x}-Windows-x64.zip`)), prerelease:true};
 const mac = {tag_name:'mac', published_at:'2026-09-12', assets:[asset('mac', 'AutoSubtitlePlus-GUI-macOS-arm64.zip')], prerelease:true};
 async function run(releases, fails = false) {
-  const links = ['GUI','CLI','macOS'].map(download => ({dataset:{download}, href:'fallback'}));
+  const links = ['GUI','CLI','macOS','Windows'].map(download => ({dataset:{download}, href:'fallback'}));
   const labels = ['', 'macOS'].map(releaseLabel => ({dataset:{releaseLabel}, textContent:'fallback'}));
   const notes = ['', 'macOS'].map(releaseNotes => ({dataset:{releaseNotes}, href:'fallback'}));
   const nodes = {'[data-download]':links, '[data-release-label]':labels, '[data-release-notes]':notes};
@@ -22,6 +22,20 @@ async function run(releases, fails = false) {
   assert.equal(both.labels[0].textContent,'win · Pre-release');
   assert.equal(both.labels[1].textContent,'mac · Pre-release');
   assert.match(both.notes[1].href,/\/tag\/mac$/);
+  assert.match(both.links[3].href,/GUI-Windows-x64\.zip$/);
+  const winInstaller = {...win, assets:[...win.assets, asset('win', 'AutoSubtitlePlus-Setup-Windows-x64.exe')]};
+  const winPreferred = await run([winInstaller,mac]);
+  assert.match(winPreferred.links[3].href,/Setup-Windows-x64\.exe$/);
+  assert.match(winPreferred.links[0].href,/GUI-Windows-x64\.zip$/);
+  assert.match(winPreferred.links[1].href,/CLI-Windows-x64\.zip$/);
+  assert.match(winPreferred.links[2].href,/macOS-arm64\.zip$/);
+  const winOnlyInstaller = await run([{...winInstaller,assets:winInstaller.assets.slice(2)}]);
+  assert.match(winOnlyInstaller.links[3].href,/\.exe$/);
+  assert.equal(winOnlyInstaller.links[0].href,'fallback');
+  const winInvalidInstaller = {...win, assets:[...win.assets,{...winInstaller.assets[2],browser_download_url:'https://invalid.example/setup.exe'}]};
+  assert.match((await run([winInvalidInstaller])).links[3].href,/\.zip$/);
+  const incompleteWin = {...win,tag_name:'partial',published_at:'2026-09-23',assets:[asset('partial','AutoSubtitlePlus-GUI-Windows-x64.zip')]};
+  assert.match((await run([incompleteWin,win])).links[3].href,/\/win\//);
   const installer = {...mac, assets:[...mac.assets, asset('mac', 'AutoSubtitlePlus-GUI-macOS-arm64.pkg')]};
   const preferred = await run([win, installer]);
   assert.match(preferred.links[2].href,/\.pkg$/);

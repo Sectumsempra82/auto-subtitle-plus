@@ -1,0 +1,23 @@
+Auto Subtitle Plus - Windows installation and manual updates
+
+Installs the desktop and command-line editions for your Windows account without
+administrator rights. First launch prepares verified app-local dependencies.
+Models download separately; CPU is the default and CUDA remains opt-in.
+
+Finish running jobs and close both editions before installing an update.
+Run the newer installer without uninstalling first. It reuses the registered
+installation folder, replaces application code and preserves the data folder,
+including settings, queue, models, cached downloads and prepared runtimes.
+The same version can be reinstalled. Older installer versions are rejected.
+
+Upgrading from a portable ZIP: select the existing extracted application folder
+(the one containing auto_subtitle_plus_gui.exe or auto_subtitle_plus.exe).
+Its data folder stays in place. Other portable copies are not moved or deleted.
+An existing AUTO_SUBTITLE_PLUS_DATA_DIR override continues to take precedence.
+
+Updates are manual. Setup does not launch the app or download dependencies.
+Uninstall removes installed application files but preserves data and exports.
+Delete user data yourself only when you no longer want it.
+
+This release is unsigned. Windows may show a SmartScreen warning; verify the
+download and its SHA256 before deciding to run it. Do not disable protection.

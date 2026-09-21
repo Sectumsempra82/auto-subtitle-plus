@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 import tempfile
 import unittest
+from urllib.error import HTTPError
 from unittest.mock import patch
 import zipfile
 
@@ -56,6 +57,28 @@ class BootstrapTests(unittest.TestCase):
             with patch.object(bootstrap, "urlopen", side_effect=lambda *a, **k: io.BytesIO(b"badbytes")), patch.object(bootstrap.time, "sleep"):
                 with self.assertRaisesRegex(RuntimeError, "checksum"):
                     bootstrap.acquire(self.item(), path, path)
+            self.assertFalse((path / "package.whl").exists())
+            self.assertFalse((path / "package.whl.partial").exists())
+
+    def test_http_500_retries_then_reuses_successful_download(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)
+            error = HTTPError(self.item()["url"], 500, "Internal Server Error", {}, None)
+            with patch.object(bootstrap, "urlopen", side_effect=[error, error, io.BytesIO(b"verified")]), patch.object(bootstrap.time, "sleep") as sleep:
+                self.assertEqual(bootstrap.acquire(self.item(), path, path).read_bytes(), b"verified")
+            self.assertEqual([call.args[0] for call in sleep.call_args_list], [5, 10])
+            with patch.object(bootstrap, "urlopen", side_effect=AssertionError("network")):
+                self.assertEqual(bootstrap.acquire(self.item(), path, path), path / "package.whl")
+
+    def test_http_500_exhaustion_explains_recovery_and_cleans_partial(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp)
+            (path / "package.whl.partial").write_bytes(b"unfinished")
+            error = HTTPError(self.item()["url"], 500, "Internal Server Error", {}, None)
+            with patch.object(bootstrap, "urlopen", side_effect=error) as request, patch.object(bootstrap.time, "sleep"):
+                with self.assertRaisesRegex(RuntimeError, "package.whl.*files.pythonhosted.org.*3 attempts.*500.*Retry setup later"):
+                    bootstrap.acquire(self.item(), path, path)
+            self.assertEqual(request.call_count, 3)
             self.assertFalse((path / "package.whl").exists())
             self.assertFalse((path / "package.whl.partial").exists())
 

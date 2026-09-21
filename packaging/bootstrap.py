@@ -60,7 +60,7 @@ def acquire(item, cache, root, offline=False):
     partial = path.with_name(path.name + ".partial")
     for attempt in range(3):
         try:
-            print(f"Downloading {filename} ({item['size'] / 1048576:.1f} MiB)", flush=True)
+            print(f"Downloading {filename} ({item['size'] / 1048576:.1f} MiB), attempt {attempt + 1}/3 from {url.hostname}", flush=True)
             with urlopen(item["url"], timeout=60) as response, partial.open("wb") as output:
                 count, last = 0, time.monotonic()
                 while chunk := response.read(1024 * 1024):
@@ -75,11 +75,18 @@ def acquire(item, cache, root, offline=False):
                 raise RuntimeError(f"Download checksum mismatch: {filename}")
             partial.replace(path)
             return path
-        except (OSError, RuntimeError):
+        except (OSError, RuntimeError) as error:
             partial.unlink(missing_ok=True)
             if attempt == 2:
-                raise
-            time.sleep(attempt + 1)
+                raise RuntimeError(
+                    f"Could not download {filename} from {url.hostname} after 3 attempts: {error}. "
+                    "Retry setup later; verified cached downloads will be reused. "
+                    "For offline setup, copy the exact pinned archive into "
+                    f"{cache}; its size and SHA256 will be checked before use."
+                ) from error
+            delay = 5 * (2 ** attempt)
+            print(f"Download failed: {error}. Retrying in {delay} seconds...", flush=True)
+            time.sleep(delay)
 
 
 @contextmanager

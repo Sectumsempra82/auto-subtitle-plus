@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Web.Script.Serialization;
 #if GUI
 using System.Windows.Forms;
@@ -11,6 +12,22 @@ using System.Drawing;
 internal static class Launcher {
     [STAThread]
     private static int Main(string[] args) {
+        using (var running = new Mutex(false, "AutoSubtitlePlus.Running")) {
+            try {
+                using (Mutex.OpenExisting("AutoSubtitlePlus.Setup")) {
+#if GUI
+                    MessageBox.Show("An installation or update is running. Wait for it to finish, then open Auto Subtitle Plus again.", "Auto Subtitle Plus");
+#else
+                    Console.Error.WriteLine("An installation or update is running. Wait for it to finish, then try again.");
+#endif
+                    return 1;
+                }
+            } catch (WaitHandleCannotBeOpenedException) { }
+            return Run(args);
+        }
+    }
+
+    private static int Run(string[] args) {
         string root = AppDomain.CurrentDomain.BaseDirectory;
         var start = new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), @"WindowsPowerShell\v1.0\powershell.exe"));
         start.Arguments = "-NoProfile -ExecutionPolicy Bypass -File \"" + Path.Combine(root, "Start-Application.ps1") + "\"";
@@ -46,7 +63,7 @@ internal static class Launcher {
             try { process.Start(); process.BeginOutputReadLine(); process.BeginErrorReadLine(); }
             catch (Exception error) { output.AppendText(error.Message); finished = true; cancel.Text = "Close"; }
         };
-        var timer = new Timer { Interval = 250 };
+        var timer = new System.Windows.Forms.Timer { Interval = 250 };
         timer.Tick += (sender, ev) => {
             if (finished) return;
             try { if (!process.HasExited) return; } catch (InvalidOperationException) { return; }

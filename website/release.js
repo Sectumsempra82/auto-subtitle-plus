@@ -14,6 +14,8 @@
     const assetFor = (release, edition) => {
       const names = edition === "macOS"
         ? ["AutoSubtitlePlus-GUI-macOS-arm64.pkg", "AutoSubtitlePlus-GUI-macOS-arm64.zip"]
+        : edition === "Windows"
+        ? ["AutoSubtitlePlus-Setup-Windows-x64.exe", "AutoSubtitlePlus-GUI-Windows-x64.zip"]
         : [`AutoSubtitlePlus-${edition}-Windows-x64.zip`];
       for (const name of names) {
         const asset = release.assets?.find(item => item.name === name &&
@@ -23,12 +25,15 @@
     };
     const published = releases.filter(item => !item.draft)
       .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
-    const windows = published.find(item => assetFor(item, "GUI") && assetFor(item, "CLI"));
+    const windows = published.find(item =>
+      assetFor(item, "Windows")?.name === "AutoSubtitlePlus-Setup-Windows-x64.exe" ||
+      (assetFor(item, "GUI") && assetFor(item, "CLI")));
     const macOS = published.find(item => assetFor(item, "macOS"));
     const releaseFor = platform => platform === "macOS" ? macOS : windows;
     document.querySelectorAll("[data-download]").forEach(link => {
       const release = releaseFor(link.dataset.download);
-      if (release) link.href = assetFor(release, link.dataset.download).browser_download_url;
+      const asset = release && assetFor(release, link.dataset.download);
+      if (asset) link.href = asset.browser_download_url;
     });
     document.querySelectorAll("[data-release-label]").forEach(label => {
       const release = releaseFor(label.dataset.releaseLabel);

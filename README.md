@@ -33,6 +33,31 @@ formats, or `--output-dir` to choose a folder. When translating, TXT contains th
 final translated text; add `--save-original` to keep the source-language TXT too.
 See the [transcription guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#transcription).
 
+## Windows installer and updates
+
+[Download the Windows installer](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-Setup-Windows-x64.exe) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5)
+
+**v0.3.0-rc.5** installs the desktop and CLI together for your Windows account,
+without administrator rights. The default folder is
+`%LOCALAPPDATA%\Programs\Auto Subtitle Plus`. Portable GUI and CLI ZIPs remain available.
+
+To update, finish jobs, close both editions and run the newer installer; do not
+uninstall first. Setup reuses the installation folder, replaces application code
+and removes obsolete Python modules. Settings, queue, models, caches and prepared
+runtimes in `data` are preserved. Same-version reinstall is supported; downgrades
+are blocked. Uninstall also leaves user data and exports intact.
+
+**Upgrading from a portable ZIP:** choose its existing extracted application
+folder in Setup. Its adjacent `data` folder remains in place. Other copies are
+not moved or deleted. `AUTO_SUBTITLE_PLUS_DATA_DIR` overrides remain supported.
+
+First launch prepares verified app-local dependencies; models download separately.
+CPU remains the default and CUDA is opt-in. Updates are manual. The installer is
+unsigned; verify the checksum and source before running it. See the
+[Windows update guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#windows-updates).
+Rebuild the installer and both ZIPs with `Build Installer.cmd`;
+[build details](packaging/README.md) include compiler acquisition and validation.
+
 ## macOS desktop preview
 
 [Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.4/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.4) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
@@ -54,7 +79,7 @@ Native tabs follow light/dark appearance, Finder can open media in the app, and 
 
 ![macOS desktop with native settings tabs](assets/screenshots/desktop-macos.png)
 
-[Build and validation instructions](packaging/macos.md). The existing [Windows GUI and CLI downloads remain v0.3.0-rc.2](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2); this release does not contain rebuilt Windows executables.
+[Build and validation instructions](packaging/macos.md). The existing [Windows GUI and CLI downloads remain v0.3.0-rc.5](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5); this release does not contain rebuilt Windows executables.
 
 ## CLI And Desktop
 
@@ -165,10 +190,10 @@ source; public redistribution additionally requires the licensing checks below.
 ### Portable Windows Editions
 
 Download the current **Windows x64 release candidate** from
-[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.2):
+[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5):
 
-- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-CLI-Windows-x64.zip)
-- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.2/AutoSubtitlePlus-GUI-Windows-x64.zip)
+- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-CLI-Windows-x64.zip)
+- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-GUI-Windows-x64.zip)
 
 Each archive is under 2 MiB, not an all-dependencies bundle. Initial
 CLI CPU dependency archives total approximately 472 MiB; prepared runtime files

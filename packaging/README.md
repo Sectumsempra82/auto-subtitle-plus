@@ -6,6 +6,41 @@ public upstream archives; preparation is app-local and needs no administrator.
 Distribution size and installed runtime size are different: CUDA still uses
 several GiB when explicitly selected. Models remain separate.
 
+## Windows installer
+
+`Build Installer.cmd` runs the regression suite, compiles both portable editions,
+and builds `AutoSubtitlePlus-Setup-Windows-x64.exe` plus its SHA256. Equivalent:
+
+```powershell
+.\packaging\Build-Portable.ps1 -Installer -Output dist/windows-rc5
+```
+
+Inno Setup 6.7.3 is prepared in portable mode under `.build/installer-tools` from
+the official release. Its pinned SHA256 and publisher signature are checked
+before extraction. No system-wide compiler installation is required. Pass
+`-InstallerCompiler C:\path\ISCC.exe` to use an existing compiler.
+
+The installer has a stable AppId, per-user registration, remembered destination,
+version guards and running-application guards. Only `app/auto_subtitle_plus` is
+removed before copying the new code, so obsolete modules and bytecode cannot
+survive updates. `data` and exported files are never installer-owned. Existing
+ZIP users select their application folder; other portable copies are untouched.
+Application-code junctions/symlinks and unrelated nonempty destinations are rejected.
+
+Actual upgrade validation uses disposable folders and refuses to run when a daily
+installer installation is registered. It tests portable migration, upgrades to the
+registered folder, reinstall, downgrade rejection, running-app rejection, stale
+module cleanup, user-data preservation and uninstall. A separately compiled older
+fixture installer is required; do not substitute a production user installation.
+
+```powershell
+python tools/test_windows_installer.py --installer dist/windows-rc5/AutoSubtitlePlus-Setup-Windows-x64.exe --older-installer path/to/older-fixture.exe --portable path/to/old-portable-folder --output .build/installer-validation
+```
+
+The wrapper supplies Windows fonts to Qt offscreen tests through `QT_QPA_FONTDIR`.
+For a direct test run set it to `C:\Windows\Fonts` first; otherwise Qt may substitute
+box glyphs and produce false layout failures.
+
 ## Rebuild Updated Code
 
 Double-click `Build Portable.cmd`, or run from the repository root:

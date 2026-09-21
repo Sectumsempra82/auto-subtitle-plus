@@ -6,6 +6,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -33,6 +34,12 @@ def main():
     compiler = Path(os.environ["SystemRoot"]) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
+    match = re.fullmatch(r'(\d+)\.(\d+)\.(\d+)rc(\d+)', version)
+    if not match:
+        raise ValueError('Define a Windows file version before changing the release version format')
+    file_version = '.'.join(match.groups())
+    assembly_info = output / 'AssemblyInfo.cs'
+    assembly_info.write_text('[assembly: System.Reflection.AssemblyFileVersion("' + file_version + '")]\n', encoding='utf-8')
     for edition in ("CLI", "GUI"):
         folder = output / f"AutoSubtitlePlus-{edition}"
         if folder.exists():
@@ -69,6 +76,7 @@ def main():
         if edition == "GUI":
             command += ["/define:GUI", "/target:winexe", "/r:System.Windows.Forms.dll", "/r:System.Drawing.dll"]
         command.append(str(ROOT / "packaging/Launcher.cs"))
+        command.append(str(assembly_info))
         subprocess.run(command, check=True)
         for name, flags in {"Setup CPU.cmd": "--runtime-device cpu --setup-only", "Setup CUDA.cmd": "--runtime-device cuda --setup-only",
                             "Check Dependencies.cmd": "--check-dependencies", "Repair Dependencies.cmd": "--repair-dependencies --setup-only"}.items():

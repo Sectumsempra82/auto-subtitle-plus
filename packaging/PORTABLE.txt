@@ -1,6 +1,8 @@
 AUTO SUBTITLE PLUS - WINDOWS X64 APP-LOCAL EDITION
 
-Extract the whole ZIP into a writable folder. Keep its files together.
+For the installer edition, run Setup and open the app from Start. See
+WINDOWS-INSTALLER.txt for updates and migration from an existing ZIP folder.
+For portable editions, extract the whole ZIP into a writable folder. Keep its files together.
 CLI: auto_subtitle_plus.exe --help
 GUI: double-click auto_subtitle_plus_gui.exe
 

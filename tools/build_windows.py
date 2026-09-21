@@ -91,9 +91,9 @@ def source_archive(destination):
     with zipfile.ZipFile(destination, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for base in ("auto_subtitle_plus", "packaging", "tools", "tests"):
             for path in sorted((ROOT / base).rglob("*")):
-                if path.is_file() and path.suffix in (".py", ".ps1", ".spec", ".json", ".md", ".txt"):
+                if path.is_file() and path.suffix in (".py", ".ps1", ".spec", ".iss", ".html", ".json", ".md", ".txt"):
                     archive.write(path, path.relative_to(ROOT))
-        for name in ("setup.py", "LICENSE", "README.md", "Build Portable.cmd"):
+        for name in ("setup.py", "LICENSE", "README.md", "Build Portable.cmd", "Build Installer.cmd"):
             archive.write(ROOT / name, name)
 
 
