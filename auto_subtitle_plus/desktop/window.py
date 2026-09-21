@@ -370,7 +370,7 @@ class MainWindow(QMainWindow):
         empty_title.setObjectName("emptyTitle")
         empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         empty_layout.addWidget(empty_title)
-        hint = QLabel("Drop audio or video here to create subtitles.\nOriginal-language subtitles are the default.")
+        hint = QLabel("Drop audio or video here for subtitles or a text transcript.\nSubtitles are the default. Choose Transcript (TXT) in Files for editable text.")
         hint.setObjectName("muted")
         hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         hint.setWordWrap(True)

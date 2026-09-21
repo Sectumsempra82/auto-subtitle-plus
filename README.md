@@ -2,19 +2,53 @@
 
 [Website & downloads](https://sectumsempra82.github.io/auto-subtitle-plus/) · [User guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/)
 
-Auto Subtitle Plus generates subtitles for video or audio files, can optionally translate them, and can embed subtitles back into video outputs.
+Auto Subtitle Plus generates subtitles and editable text transcripts from video or audio files. It can optionally translate the text and embed subtitles back into video outputs.
 
 This fork keeps original-language subtitles as the default. Translation only happens when `--translate-to` is provided, and bilingual output only happens when `--bilingual` is provided.
 
+## Subtitles first. Text transcripts too.
+
+- **Subtitles:** export timed SRT or VTT captions, or embed them in a video.
+- **Transcripts:** turn interviews, lectures, podcasts and voice memos into plain TXT drafts you can read, search and edit.
+- **Optional translation:** keep the spoken language or translate the output when you need it.
+
+Both use the same local speech recognition. Subtitles include timing for playback;
+TXT exports the recognized text without timestamps or speaker labels. Treat it as
+a starting point: review names, numbers, punctuation and overlapping speech before
+using or sharing it. It is not a transcript editor or an automatic summary.
+
+**Desktop:** open **Files**, enable **Transcript (TXT)** (called **Text file** in
+Mac rc.3 and Windows rc.2), and turn off **Subtitle file** and **Video** for TXT only.
+Leave **Translate** off to keep the spoken language. Keep **Subtitle file** on if
+you want both TXT and timed captions. The desktop saves beside each input by default.
+
+**CLI:** create a transcript without subtitles:
+
+```bash
+auto_subtitle_plus interview.mp3 --output-txt --no-overwrite
+```
+
+This writes `interview.txt` to the current directory. Add `--output-srt` for both
+formats, or `--output-dir` to choose a folder. When translating, TXT contains the
+final translated text; add `--save-original` to keep the source-language TXT too.
+See the [transcription guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#transcription).
+
 ## macOS desktop preview
 
-[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.3/AutoSubtitlePlus-GUI-macOS-arm64.zip) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.3) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
+[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.4/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.4) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
 
-**v0.3.0-rc.3** includes a native macOS `.app` with Python and processing libraries bundled. Extract it, move it to Applications, and install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; tested on macOS 26.5. Intel Macs and older macOS versions have not been validated.
+**v0.3.0-rc.4** includes a native macOS `.app` with Python and processing libraries bundled, plus a **PKG installer** that installs or replaces it in Applications. A ZIP is also available. Install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; this build was tested on macOS 27.0. Intel Macs and older macOS versions have not been validated.
 
-The app is ad-hoc signed, **not Developer ID signed or notarized**. If macOS blocks its first launch, use Privacy & Security → Open Anyway only after verifying the download and deciding you trust it. Do not disable system protection.
+The installer is unsigned; the app is ad-hoc signed, **not Developer ID signed or notarized**. If macOS blocks its first launch, use Privacy & Security → Open Anyway only after verifying the download and deciding you trust it. Do not disable system protection.
 
 The Mac GUI processes local files and offers local translation only. Model weights download on first use; cached models work offline. Start with CPU. CUDA and Windows-only Hy-MT2 are rejected before a job starts. The default local translation model is M2M100-418M. No accounts or cloud service are required.
+
+**Updating on Mac:** finish running jobs and quit the app. For a `.pkg` download,
+open it and follow Installer to replace the copy in `/Applications`; administrator
+authorization may be required. For the ZIP edition, extract it, drag the app
+into Applications and choose **Replace**, not **Keep Both**. Your settings, queue
+and models remain in their user-data folders. Updates are manual; there is no
+in-app updater. See the [Mac upgrade guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#mac-updates).
 
 Native tabs follow light/dark appearance, Finder can open media in the app, and Command shortcuts control files and the queue. Settings and queue state live in `~/Library/Application Support/AutoSubtitlePlus/desktop/state.json`; models stay outside the app. Replacing the app preserves them.
 
@@ -59,6 +93,8 @@ batch's settings. Pause finishes the current file; Cancel stops it and pauses
 the queue. Failed files remain visible with diagnostics while later jobs continue.
 
 Settings are grouped into Speech, Translate, Layout, Files, and System tabs.
+The **Text transcript (TXT) settings** shortcut opens Files without changing your
+output choices. Enable **Transcript (TXT)** there for plain text.
 Hover over a setting or its label for explanations, units, requirements and
 tradeoffs. Labels retain their help when an individual setting is disabled.
 Queue actions, progress indicators, output files and resource meters also provide
@@ -214,10 +250,10 @@ The local translation implementation uses and credits:
 ## What's New
 
 - Original-language subtitles by default.
+- Plain text transcripts with `--output-txt`, on their own or alongside subtitles.
 - Optional translation with `--translate-to`.
 - Optional bilingual subtitles with `--bilingual`.
 - SRT or VTT subtitle output with `--subtitle-format`.
-- Plain text transcript output with `--output-txt`.
 - Soft-subtitle MKV output with `--output-mkv`.
 - Stable Whisper integration via `stable-ts`.
 - Optional word timestamp request with `--word-timestamps`.
@@ -262,6 +298,12 @@ Generate an SRT subtitle file in the current directory:
 
 ```bash
 auto_subtitle_plus video.mp4
+```
+
+Create an editable text transcript from audio, without a subtitle file:
+
+```bash
+auto_subtitle_plus interview.mp3 --output-txt --no-overwrite
 ```
 
 Generate and embed subtitles into an MP4:

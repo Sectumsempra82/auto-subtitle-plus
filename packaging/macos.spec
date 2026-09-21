@@ -1,5 +1,6 @@
 """Apple Silicon desktop bundle. Build on macOS with tools/package_macos.py."""
 from pathlib import Path
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, copy_metadata
 
 root = Path(SPECPATH).parent
@@ -32,7 +33,7 @@ exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="AutoSubtitlePlus",
 collection = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="AutoSubtitlePlus")
 app = BUNDLE(collection, name="Auto Subtitle Plus.app", version="0.3.0",
              bundle_identifier="local.autosubtitleplus.desktop", info_plist={
-                 "CFBundleDisplayName": "Auto Subtitle Plus", "CFBundleVersion": "3",
+                 "CFBundleDisplayName": "Auto Subtitle Plus", "CFBundleVersion": os.environ["ASP_MACOS_BUILD_NUMBER"],
                  "LSMinimumSystemVersion": "26.0", "NSHighResolutionCapable": True,
                  "NSPrincipalClass": "NSApplication", "CFBundleDocumentTypes": [{
                      "CFBundleTypeName": "Audio and Video", "CFBundleTypeRole": "Viewer",

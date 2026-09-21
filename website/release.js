@@ -11,9 +11,16 @@
     if (!response.ok) return;
     const releases = await response.json();
     if (!Array.isArray(releases)) return;
-    const assetFor = (release, edition) => release.assets?.find(asset =>
-      asset.name === (edition === "macOS" ? "AutoSubtitlePlus-GUI-macOS-arm64.zip" : `AutoSubtitlePlus-${edition}-Windows-x64.zip`) &&
-      asset.browser_download_url?.startsWith(`https://github.com/${repository}/releases/download/`));
+    const assetFor = (release, edition) => {
+      const names = edition === "macOS"
+        ? ["AutoSubtitlePlus-GUI-macOS-arm64.pkg", "AutoSubtitlePlus-GUI-macOS-arm64.zip"]
+        : [`AutoSubtitlePlus-${edition}-Windows-x64.zip`];
+      for (const name of names) {
+        const asset = release.assets?.find(item => item.name === name &&
+          item.browser_download_url?.startsWith(`https://github.com/${repository}/releases/download/`));
+        if (asset) return asset;
+      }
+    };
     const published = releases.filter(item => !item.draft)
       .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
     const windows = published.find(item => assetFor(item, "GUI") && assetFor(item, "CLI"));

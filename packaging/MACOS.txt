@@ -1,7 +1,15 @@
-Auto Subtitle Plus v0.3.0-rc.3 — Apple Silicon macOS preview
+Auto Subtitle Plus v0.3.0-rc.4 — Apple Silicon macOS preview
 
-Extract the ZIP and move Auto Subtitle Plus.app to Applications. Requires macOS
-26 or newer on Apple Silicon and FFmpeg/ffprobe on PATH, /opt/homebrew/bin or
+If your download is a .pkg, open it and follow Installer to install or replace
+Auto Subtitle Plus in /Applications. Finish running jobs and quit the app first.
+Administrator authorization may be required. Do not uninstall the old app first.
+The installer replaces the whole app bundle; settings, queue and models stay
+outside it. It does not add an automatic updater or download dependencies.
+
+For the ZIP edition, extract it, drag Auto Subtitle Plus.app into Applications
+and choose Replace when Finder asks. Avoid Keep Both to prevent duplicate apps.
+
+Requires macOS 26 or newer on Apple Silicon and FFmpeg/ffprobe on PATH, /opt/homebrew/bin or
 /usr/local/bin. For Homebrew users: brew install ffmpeg
 Python, Qt and processing libraries are bundled; model weights are not.
 Internet is needed to acquire models. Cached models support offline processing.
@@ -9,9 +17,9 @@ The Mac GUI offers local processing and local translation only. Start with CPU;
 CUDA and Hy-MT2 are not supported by this Mac preview.
 
 The app is ad-hoc signed, not Developer ID signed or notarized. macOS may block
-its first launch. Only if you trust this download, use System Settings > Privacy
+the installer or the app’s first launch. The installer is also unsigned. Only if you trust this download, use System Settings > Privacy
 & Security > Open Anyway after attempting to open it. Do not disable Gatekeeper.
-Validated on an Apple Silicon Mac running macOS 26.5; older supported versions
+Validated on an Apple Silicon Mac running macOS 27.0; older supported versions
 and Intel Macs have not been validated. This is a release candidate.
 
 Settings/queue: ~/Library/Application Support/AutoSubtitlePlus/desktop/state.json
@@ -19,8 +27,8 @@ Model caches normally use ~/.cache; configured cache paths remain supported.
 Your media, settings and models are not included in the distributed package.
 
 Source, build instructions and release notes:
-https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.3
-https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.3/packaging/macos.md
+https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.4
+https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.4/packaging/macos.md
 
 Third-party notices and the build dependency inventory are in this directory.
 Qt/PySide6 uses LGPLv3/GPLv3 terms; other libraries retain their own licenses.

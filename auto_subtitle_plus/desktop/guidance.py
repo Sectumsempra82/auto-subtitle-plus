@@ -1,10 +1,10 @@
 """Built-in settings guidance shared by the Windows and macOS desktops."""
 
 TAB_GUIDANCE: dict[str, str] = {
-    "Speech": "Turn audio into text here. Backend is the engine; model is the trained speech recognizer. Hover over fields and labels for tradeoffs.",
-    "Translate": "Translation runs after transcription and has its own model and device. Audio language belongs in Speech; the target language belongs here. Leave Translate off for original-language subtitles.",
+    "Speech": "Recognize speech for subtitles or text transcripts. Choose Transcript (TXT) in Files for an editable draft. Backend is the engine; model is the trained speech recognizer. Hover over fields and labels for tradeoffs.",
+    "Translate": "Translation runs after transcription and has its own model and device. Audio language belongs in Speech; the target language belongs here. Leave Translate off for original-language subtitles and transcripts.",
     "Layout": "These are readability targets for translated captions. Start with 42 characters per line, 2 lines and 17 characters per second; review the result in a player. Bilingual output preserves source timing.",
-    "Files": "Choose which outputs to keep. SRT is a good general-purpose subtitle file; MP4 burn makes captions permanent, while MKV soft keeps them selectable. Video export takes extra time and disk space.",
+    "Files": "Choose subtitles, a text transcript, or both. For TXT only, enable Transcript (TXT) and turn off Subtitle file and Video. Leave Translate off for the spoken language. TXT is an editable draft without timestamps or speaker labels. MP4 burn makes captions permanent; MKV soft keeps them selectable.",
     "System": "First use may download models and runtimes. Prepare them before enabling Offline. Retry translation requires a matching cached transcript; turn it off to transcribe again. Cache storage is disk space, not GPU memory.",
 }
 

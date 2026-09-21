@@ -115,6 +115,10 @@ class SettingsPanel(QWidget):
             self.tabs.setStyleSheet("QTabBar::tab { min-width: 0px; padding: 9px 8px; }")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
+        self.transcript_button = QPushButton("Text transcript (TXT) settings")
+        self.transcript_button.setToolTip("Open Files to choose a plain text transcript, on its own or alongside subtitles. This shortcut does not change your settings.")
+        self.transcript_button.clicked.connect(self._show_transcript_options)
+        layout.addWidget(self.transcript_button)
         layout.addWidget(self.tabs)
 
         self._build_speech_tab()
@@ -374,6 +378,7 @@ class SettingsPanel(QWidget):
 
     def _build_files_tab(self) -> None:
         form = self._form_tab("Files")
+        self.files_tab = self.tabs.widget(self.tabs.count() - 1)
         self.beside_input = QCheckBox()
         self.beside_input.setChecked(True)
         self.folder_output = QCheckBox()
@@ -398,7 +403,7 @@ class SettingsPanel(QWidget):
         form.addRow("Output folder", output_row)
         form.addRow("Subtitle file", self.output_srt)
         form.addRow("Format", self.subtitle_format)
-        form.addRow("Text file", self.output_txt)
+        form.addRow("Transcript (TXT)", self.output_txt)
         form.addRow("Extracted audio", self.output_audio)
         form.addRow("Video", self.output_video)
         form.addRow("Video mode", self.video_mode)
@@ -408,6 +413,11 @@ class SettingsPanel(QWidget):
         self.beside_input.toggled.connect(self._on_output_location_changed)
         self.folder_output.toggled.connect(self._on_output_location_changed)
         self.browse_output_dir.clicked.connect(lambda: self._browse_directory(self.output_dir))
+
+    def _show_transcript_options(self) -> None:
+        self.tabs.setCurrentWidget(self.files_tab)
+        self.files_tab.ensureWidgetVisible(self.output_txt)
+        self.output_txt.setFocus()
 
     def _build_system_tab(self) -> None:
         form = self._form_tab("System")
@@ -472,7 +482,7 @@ class SettingsPanel(QWidget):
             "word_timestamps": "Request individual word timing from the speech backend. This provides finer timing information, not animated word-by-word captions.",
             "enhance_consistency": "Use previously transcribed text as context for the next segment. May keep names, terminology and phrasing consistent in clean lectures or interviews. Mistakes can carry forward and cause repetition on noisy audio or silence. Start off; try on for continuous speech and turn off if phrases repeat. Works with faster at batch 1 only. This is not a general accuracy boost.",
             "asr_validation": "Compatibility issues between the selected speech model and backend. Resolve these before starting the queue.",
-            "translate_enabled": "Translate the source transcript into the target language after speech recognition. Leave off to keep subtitles in the spoken language.",
+            "translate_enabled": "Translate the source transcript into the target language after speech recognition. Leave off to keep subtitles and transcripts in the spoken language.",
             "translate_to": "Language for the final translated subtitles. Enable Translate first. Available local models also depend on the source language and route.",
             "translation_engine": "Local runs translation on this computer after model downloads. Google sends transcript text to an online service and cannot work offline. Local failures never silently switch to Google.",
             "translation_route": "direct translates source to target. via-en translates through English and may need two models; neither endpoint may be English. Check Route preview before starting.",
@@ -496,7 +506,7 @@ class SettingsPanel(QWidget):
             "browse_output_dir": "Choose the output destination. Select Use folder first to enable this button.",
             "output_srt": "Write a separate subtitle file using the selected SRT or VTT format. Disable only if you do not need a standalone subtitle file.",
             "subtitle_format": "Format for the subtitle file: SRT is widely supported by players and editors; VTT is useful for web video. Enable Subtitle file to export it.",
-            "output_txt": "Write a plain TXT transcript without subtitle timing. With translation enabled, it contains the final translated text.",
+            "output_txt": "Save an editable plain text transcript without timestamps or speaker labels. For TXT only, turn off Subtitle file and Video. Leave Translate off for the spoken language; when enabled, TXT contains the final translated text. Review recognition before using or sharing it.",
             "output_audio": "Keep the extracted audio as an additional output. This uses extra disk space.",
             "output_video": "Create a subtitled video using Video mode below. This adds processing time and disk usage.",
             "video_mode": "MP4 burn encodes captions into the picture so they cannot be switched off. MKV soft adds a selectable subtitle track for compatible players. Enable Video first.",

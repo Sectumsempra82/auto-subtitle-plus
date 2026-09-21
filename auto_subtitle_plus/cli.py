@@ -130,10 +130,13 @@ def main():
 def build_parser():
     parser = argparse.ArgumentParser(
         formatter_class=argparse.RawTextHelpFormatter,
-        description="Auto Subtitle Plus - Automatically generate and translate subtitles for video/audio files",
+        description="Auto Subtitle Plus - Generate subtitles and text transcripts from video/audio files, with optional translation",
         epilog="""Examples:
   Basic usage:
     auto_subtitle_plus video.mp4 --output-video
+
+  Save a text transcript without subtitles:
+    auto_subtitle_plus audio.mp3 --output-txt
 
   Force English transcription:
     auto_subtitle_plus video.mp4 --language en
@@ -163,7 +166,7 @@ def build_parser():
     output_group.add_argument("-a", "--output-audio", action="store_true", help="Save extracted audio file")
     output_group.add_argument("-v", "--output-video", action="store_true", help="Generate video with embedded subtitles")
     output_group.add_argument("--subtitle-format", choices=("srt", "vtt"), default="srt", help="Subtitle file format (default: %(default)s)")
-    output_group.add_argument("--output-txt", action="store_true", help="Also save final text (translated when --translate-to is used)")
+    output_group.add_argument("--output-txt", action="store_true", help="Save a plain text transcript without timestamps; use alone for TXT only or with --output-srt for both (translated when --translate-to is used)")
     output_group.add_argument("--output-mkv", action="store_true", help="When outputting video, mux subtitles as a soft track in an MKV container")
     output_group.add_argument("--no-overwrite", dest="overwrite", action="store_false", default=True, help="Fail when an output file already exists")
 
