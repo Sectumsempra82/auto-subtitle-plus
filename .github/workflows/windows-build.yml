@@ -76,3 +76,16 @@ jobs:
           files: |
             dist/windows-light/*.zip
             dist/windows-light/*.sha256
+
+      - name: Publish rolling main release assets
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: continuous
+          name: Continuous Windows build
+          prerelease: true
+          make_latest: false
+          generate_release_notes: false
+          files: |
+            dist/windows-light/*.zip
+            dist/windows-light/*.sha256
