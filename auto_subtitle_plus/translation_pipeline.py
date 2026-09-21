@@ -81,11 +81,14 @@ def normalize_open_language(language: str | None) -> str | None:
         "spanish": "es",
         "german": "de",
         "portuguese": "pt",
+        "romanian": "ro",
+        "chinese simplified": "zh",
         "japanese": "ja",
         "korean": "ko",
-        "chinese": "zh-cn",
-        "mandarin": "zh-cn",
+        "chinese": "zh",
+        "mandarin": "zh",
         "turkish": "tr",
+        "zh-cn": "zh",
     }
     return aliases.get(value, value) or None
 
@@ -101,6 +104,13 @@ def normalize_detected_language(language: str | None) -> str:
         "spanish": "es",
         "german": "de",
         "portuguese": "pt",
+        "romanian": "ro",
+        "chinese simplified": "zh",
+        "japanese": "ja",
+        "korean": "ko",
+        "chinese": "zh",
+        "mandarin": "zh",
+        "turkish": "tr",
     }
     return aliases.get(value, value) or "unknown"
 

@@ -120,6 +120,36 @@ def source_cue(
 
 
 class TranslationPipelineContractTests(unittest.TestCase):
+    def test_unicode_text_survives_srt_vtt_txt_and_atomic_cache_writes(self):
+        import io
+
+        cue = SubtitleCue(
+            id="unicode-1",
+            source_ids=("source-1",),
+            start=0.0,
+            end=2.0,
+            text="こんにちは — مرحبًا — Türkçe — 中文 — café",
+            language="zh-cn",
+            source_text="Привет",
+        )
+
+        for subtitle_format in ("srt", "vtt"):
+            output = io.StringIO()
+            utils.write_subtitle((cue,), output, subtitle_format=subtitle_format, translate_off=True, bilingual=True)
+            rendered = output.getvalue()
+            self.assertIn(cue.text, rendered)
+            self.assertIn(cue.source_text, rendered)
+            self.assertEqual(rendered.encode("utf-8").decode("utf-8"), rendered)
+
+        text_output = io.StringIO()
+        utils.write_txt((cue,), text_output)
+        self.assertEqual(text_output.getvalue().strip(), cue.text)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "字幕-é.txt"
+            translation_pipeline.atomic_write_text(str(path), cue.text + "\n")
+            self.assertEqual(path.read_text(encoding="utf-8"), cue.text + "\n")
+
     def test_clear_translation_cache_removes_stage_caches_but_retains_models(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

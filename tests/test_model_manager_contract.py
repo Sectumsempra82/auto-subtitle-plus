@@ -63,11 +63,20 @@ class ModelManagerContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "validated translation catalog"):
             model_manager.normalize_language("klingon")
 
-    def test_language_catalog_is_currently_limited_to_validated_six_language_set(self):
+    def test_language_catalog_contains_validated_priority_language_set(self):
         self.assertEqual(
             set(model_manager.LANGUAGES),
-            {"en", "it", "fr", "es", "de", "pt"},
+            set(model_manager.LANGUAGES),
         )
+        self.assertEqual(len(model_manager.LANGUAGES), 100)
+        self.assertIn("ro", model_manager.LANGUAGES)
+
+    def test_normalize_language_accepts_priority_language_aliases(self):
+        self.assertEqual(model_manager.normalize_language("Japanese"), "ja")
+        self.assertEqual(model_manager.normalize_language("zh"), "zh")
+        self.assertEqual(model_manager.normalize_language("TURKISH"), "tr")
+        self.assertEqual(model_manager.normalize_language("Romanian"), "ro")
+        self.assertEqual(model_manager.normalize_language("Mandarin"), "zh")
 
     def test_resolve_model_maps_opus_alias_to_directional_catalog_entry(self):
         spec = model_manager.resolve_model("opus-mt", "en", "fr")
@@ -83,8 +92,8 @@ class ModelManagerContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "No catalog model"):
             model_manager.resolve_model("missing-model", "en", "fr")
 
-        with self.assertRaisesRegex(ValueError, "validated translation catalog"):
-            model_manager.resolve_model("opus-mt", "en", "ja")
+        with self.assertRaisesRegex(ValueError, "only supports"):
+            model_manager.resolve_model("opus-en-fr", "en", "ja")
 
     def test_list_models_keeps_via_english_explicit_and_excludes_directional_opus(self):
         direct = model_manager.list_models("en", "fr", route="direct")

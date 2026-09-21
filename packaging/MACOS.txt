@@ -1,4 +1,4 @@
-Auto Subtitle Plus v0.3.0-rc.4 — Apple Silicon macOS preview
+Auto Subtitle Plus v0.3.0-rc.8 — Apple Silicon macOS preview
 
 If your download is a .pkg, open it and follow Installer to install or replace
 Auto Subtitle Plus in /Applications. Finish running jobs and quit the app first.
@@ -27,8 +27,8 @@ Model caches normally use ~/.cache; configured cache paths remain supported.
 Your media, settings and models are not included in the distributed package.
 
 Source, build instructions and release notes:
-https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.4
-https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.4/packaging/macos.md
+https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.8
+https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.8/packaging/macos.md
 
 Third-party notices and the build dependency inventory are in this directory.
 Qt/PySide6 uses LGPLv3/GPLv3 terms; other libraries retain their own licenses.

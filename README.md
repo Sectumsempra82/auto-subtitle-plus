@@ -10,7 +10,7 @@ Latest compiled builds:
 
 - [Windows x64 CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-CLI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-CLI-Windows-x64.zip.sha256)
 - [Windows x64 GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-GUI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.6/AutoSubtitlePlus-GUI-Windows-x64.zip.sha256)
-- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.4/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
+- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.7/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
 
 [Latest tagged release](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest) · [All release assets and checksums](https://github.com/Sectumsempra82/auto-subtitle-plus/releases) · [Latest continuous Windows build](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/continuous)
 
@@ -70,7 +70,7 @@ Rebuild the installer and both ZIPs with `Build Installer.cmd`;
 
 ## macOS desktop preview
 
-[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.4/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.4) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
+[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.7/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.7) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
 
 **v0.3.0-rc.4** includes a native macOS `.app` with Python and processing libraries bundled, plus a **PKG installer** that installs or replaces it in Applications. A ZIP is also available. Install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; this build was tested on macOS 27.0. Intel Macs and older macOS versions have not been validated.
 
@@ -527,7 +527,7 @@ paths
 
 --translate-to TRANSLATE_TO
   Target language. Local translation is the default and may download a model.
-  Initial local catalog languages: en, it, fr, es, de, pt.
+  Whisper-compatible local language codes are accepted for transcription.
 
 --bilingual
   When translating, include original text above translated text.
@@ -586,8 +586,10 @@ download the default Hy-MT2 model and the managed llama.cpp runtime. Omitting
 `--output-txt` contains final translated text when translation is requested.
 Google requires `--translation-backend google`; no local error switches to it.
 
-The initial selectable languages are English, Italian, French, Spanish, German
-and Portuguese. Multilingual model families support these six; OPUS entries
+The initial selectable languages are English, Italian, French, Spanish, German,
+Whisper-compatible language codes are accepted for transcription. Multilingual
+translation model families and OPUS entries still support only their validated
+directions.
 support only their listed direction. Broader upstream language counts are not
 a claim that this application's adapters have validated every language.
 

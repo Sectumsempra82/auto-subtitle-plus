@@ -34,15 +34,7 @@ from .guidance import HARDWARE_GUIDE, TAB_GUIDANCE
 
 ASR_MODELS = ("tiny", "base", "small", "medium", "large-v3", "turbo", "distil-large-v3.5")
 GUIDE_URL = "https://sectumsempra82.github.io/auto-subtitle-plus/guide/"
-ASR_LANGUAGES = (
-    ("", "Auto detect"),
-    ("en", "English"),
-    ("es", "Spanish"),
-    ("fr", "French"),
-    ("de", "German"),
-    ("pt", "Portuguese"),
-    ("it", "Italian"),
-)
+ASR_LANGUAGES = (("", "Auto detect"),) + tuple(LANGUAGES.items())
 COMPUTE_TYPES = ("auto", "float16", "int8", "int8_float16", "float32")
 TARGET_LANGUAGES = tuple((code, name) for code, name in LANGUAGES.items())
 OPTION_KEYS = (
