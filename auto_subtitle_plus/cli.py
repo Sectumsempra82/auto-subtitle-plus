@@ -56,6 +56,9 @@ from .processing import (
     write_txt_atomic,
 )
 from .translation_pipeline import TranslationPipeline, clear_translation_cache
+from .portable import initialized_metadata
+from .backends import whisper_cache_dir
+from .model_manager import cache_root
 
 warnings.filterwarnings("ignore", category=UserWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -99,6 +102,10 @@ def main():
         except Exception as error:
             print(format_backend_error(error))
             return 1
+        return 0
+
+    if args.diagnose:
+        print_diagnostics(args)
         return 0
 
     try:
@@ -157,6 +164,7 @@ def build_parser():
     parser.add_argument("paths", nargs="*", help="Input file paths or wildcards (e.g., *.mp4)")
     parser.add_argument("--backend", default="stable", choices=BACKENDS, help="Transcription backend (default: %(default)s)")
     parser.add_argument("--list-models", action="store_true", help="List models for the selected backend and exit without loading a model")
+    parser.add_argument("--diagnose", action="store_true", help="Show runtime, cache, model and device paths, then exit")
     parser.add_argument("--list-translation-models", action="store_true", help="List local translation models for the selected translation route and exit")
     parser.add_argument("-m", "--model", default="small", help="whisper model to use (default: %(default)s)")
     parser.add_argument("-o", "--output-dir", default=os.getcwd(), help="Output directory (default: current directory)")
@@ -217,6 +225,24 @@ def build_parser():
 
 def stderr_print(message):
     print(message, file=sys.stderr)
+
+
+def print_diagnostics(args):
+    """Print the effective runtime and storage locations without loading models."""
+    metadata = initialized_metadata()
+    data_dir = metadata.get("data_dir") or os.environ.get("AUTO_SUBTITLE_PLUS_DATA_DIR")
+    print("Auto Subtitle Plus diagnostics")
+    print(f"Python: {sys.executable}")
+    print(f"Python version: {sys.version.split()[0]}")
+    print(f"Platform: {sys.platform}")
+    print(f"Backend: {args.backend}")
+    print(f"Model: {args.model}")
+    print(f"Device: {args.device or default_device()}")
+    print(f"Application data: {data_dir or '(source/default environment)'}")
+    print(f"Stable Whisper cache: {whisper_cache_dir()}")
+    print(f"Local translation/model cache: {cache_root(args.translation_cache_dir)}")
+    print(f"Hugging Face cache: {os.environ.get('HF_HOME', '(library default)')}")
+    print("Models are downloaded only when selected and are reused from these caches.")
 
 
 def cli_progress(enabled, stream=None):

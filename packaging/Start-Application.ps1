@@ -32,7 +32,9 @@ try {
                 if ($offline) { throw 'Offline: Python runtime archive is missing or corrupt.' }
                 $uri = [Uri]$manifest.python.url
                 if ($uri.Scheme -ne 'https' -or $uri.Host -ne 'www.python.org') { throw 'Unapproved Python download source.' }
-                Write-Status 'Downloading official app-local Python (11 MiB)...'
+                Write-Status 'Auto Subtitle Plus uses an isolated Python runtime inside its data folder.'
+                Write-Status 'It does not install system Python, change PATH, or modify the registry.'
+                Write-Status 'Downloading the official app-local Python runtime (11 MiB)...'
                 $partial = $archive + '.partial'
                 for ($attempt = 0; $attempt -lt 3; $attempt++) {
                     try {

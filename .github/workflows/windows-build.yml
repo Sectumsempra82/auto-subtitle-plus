@@ -1,0 +1,56 @@
+name: Windows x64 build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+
+      - name: Run regression tests
+        shell: pwsh
+        env:
+          QT_QPA_FONTDIR: C:\Windows\Fonts
+        run: python -m unittest discover -s tests -q
+
+      - name: Build Windows x64 CLI and GUI
+        shell: pwsh
+        run: .\packaging\Build-Portable.ps1 -PythonExe (Get-Command python).Source -Output dist/windows-light -SkipTests
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoSubtitlePlus-Windows-x64-${{ github.sha }}
+          path: |
+            dist/windows-light/*.zip
+            dist/windows-light/*.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish tagged release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/windows-light/*.zip
+            dist/windows-light/*.sha256

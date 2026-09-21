@@ -219,6 +219,11 @@ No administrator rights, runtime pip/compiler, global Python or PATH changes are
 needed. System-wide installation is never automatic and requires separate explicit
 approval. `Check Dependencies.cmd` verifies installed files; `Repair Dependencies.cmd`
 rebuilds them. See the packaged `README.txt` and [packaging guide](packaging/README.md).
+The launcher uses a pinned, isolated Python runtime owned by the application; it
+does not install or replace system Python. Run `auto_subtitle_plus --diagnose` to
+see the effective runtime, model and cache paths. See the wiki pages for the
+[Windows runtime and Python](https://github.com/Sectumsempra82/auto-subtitle-plus/wiki/Windows-runtime-and-Python)
+and [models, caches, and offline use](https://github.com/Sectumsempra82/auto-subtitle-plus/wiki/Models-caches-and-offline-use).
 The small launchers use inbox Windows PowerShell/.NET Framework. Wheel preparation
 uses [PyPA installer](https://github.com/pypa/installer) (MIT). Only Whisper and
 Stable-TS, which lack compatible published wheels, are prebuilt and bundled.
