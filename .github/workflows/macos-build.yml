@@ -80,7 +80,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           # The Windows workflow generates the release notes for this tag;
-          # this job only attaches the Mac assets to the same release.
+          # this job only attaches the Mac assets to the same release. Still
+          # set prerelease here too, in case this job's upload creates the
+          # release before the Windows job's does.
+          prerelease: ${{ contains(github.ref_name, '-rc.') }}
           files: |
             dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg
             dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg.sha256
