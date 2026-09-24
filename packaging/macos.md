@@ -13,7 +13,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[gui,faster]'
 .venv/bin/python -m pip install 'pyinstaller==6.22.2'
 .venv/bin/python tools/package_macos_sources.py
-.venv/bin/python tools/package_macos.py --build-number 10
+.venv/bin/python tools/package_macos.py --build-number 11
 ```
 
 Outputs:
@@ -28,12 +28,12 @@ Outputs:
 Use a positive, monotonically increasing `--build-number` for every distributed
 Mac build, including rebuilds and release candidates. Existing ZIP releases use
 build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used
-build 6; rc.8 used build 7; rc.9 used build 8. Starting with rc.10, the build
-number is simply the release candidate number itself (rc.10 uses build 10, rc.11
-would use build 11, and so on), computed automatically by
+build 6; rc.8 used build 7; rc.9 used build 8. Starting with rc.11, the build
+number is simply the release candidate number itself (rc.11 uses build 11,
+rc.12 would use build 12, and so on), computed automatically by
 `.github/workflows/macos-build.yml` from the `rcN` suffix in `setup.py`'s
 version, so it no longer needs manual tracking here as long as rc numbers keep
-increasing (10 is still greater than the last manually tracked build, 8). The
+increasing (11 is still greater than the last manually tracked build, 8). The
 number becomes the app's `CFBundleVersion` and the installer receipt version.
 Keep increasing it across marketing-version changes; do not reuse or reset it.
 Update the app's marketing version in `macos.spec` when preparing a new version
