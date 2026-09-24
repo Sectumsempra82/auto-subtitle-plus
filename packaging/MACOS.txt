@@ -1,4 +1,4 @@
-Auto Subtitle Plus v0.3.0-rc.8 — Apple Silicon macOS preview
+Auto Subtitle Plus v0.3.0-rc.9 — Apple Silicon macOS preview
 
 If your download is a .pkg, open it and follow Installer to install or replace
 Auto Subtitle Plus in /Applications. Finish running jobs and quit the app first.
@@ -13,7 +13,9 @@ Requires macOS 26 or newer on Apple Silicon and FFmpeg/ffprobe on PATH, /opt/hom
 /usr/local/bin. For Homebrew users: brew install ffmpeg
 Python, Qt and processing libraries are bundled; model weights are not.
 Internet is needed to acquire models. Cached models support offline processing.
-The Mac GUI offers local processing and local translation only. Start with CPU;
+Speech recognition and local model translation run on your Mac. Google
+translation is also available and requires a network connection; it cannot
+be combined with Offline mode, context or glossary options. Start with CPU;
 CUDA and Hy-MT2 are not supported by this Mac preview.
 
 The app is ad-hoc signed, not Developer ID signed or notarized. macOS may block
@@ -27,8 +29,8 @@ Model caches normally use ~/.cache; configured cache paths remain supported.
 Your media, settings and models are not included in the distributed package.
 
 Source, build instructions and release notes:
-https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.8
-https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.8/packaging/macos.md
+https://github.com/Sectumsempra82/auto-subtitle-plus/tree/v0.3.0-rc.9
+https://github.com/Sectumsempra82/auto-subtitle-plus/blob/v0.3.0-rc.9/packaging/macos.md
 
 Third-party notices and the build dependency inventory are in this directory.
 Qt/PySide6 uses LGPLv3/GPLv3 terms; other libraries retain their own licenses.

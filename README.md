@@ -10,7 +10,7 @@ Latest compiled builds:
 
 - [Windows x64 CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-CLI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-CLI-Windows-x64.zip.sha256)
 - [Windows x64 GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-Windows-x64.zip.sha256)
-- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
+- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.9/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
 
 [Latest tagged release](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest) · [All release assets and checksums](https://github.com/Sectumsempra82/auto-subtitle-plus/releases) · [Latest continuous Windows build](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/continuous)
 
@@ -68,15 +68,17 @@ unsigned; verify the checksum and source before running it. See the
 Rebuild the installer and both ZIPs with `Build Installer.cmd`;
 [build details](packaging/README.md) include compiler acquisition and validation.
 
-## macOS desktop preview
+## macOS desktop
 
-[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.8) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
+[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.9/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.9) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
 
-**v0.3.0-rc.4** includes a native macOS `.app` with Python and processing libraries bundled, plus a **PKG installer** that installs or replaces it in Applications. A ZIP is also available. Install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; this build was tested on macOS 27.0. Intel Macs and older macOS versions have not been validated.
+**v0.3.0-rc.9** brings the redesigned, Mac-only workspace to the Apple Silicon desktop app. Queue, Speech, Translate, History/output review, Settings and Help each have a clear place in the sidebar. The Queue screen brings file management, drag-and-drop, queue controls and live resource meters together; Speech and Translate use focused forms; History shows processing status and lets you review generated transcript, translation and subtitle outputs. Settings keeps the Layout, Files and System options available in the existing desktop, with the same processing behavior and saved values. The Windows GUI keeps its existing interface.
+
+The app is a native macOS `.app` with Python and processing libraries bundled, plus a **PKG installer** that installs or replaces it in Applications. A ZIP is also available. Install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; this build was tested on macOS 27.0. Intel Macs and older macOS versions have not been validated.
 
 The installer is unsigned; the app is ad-hoc signed, **not Developer ID signed or notarized**. If macOS blocks its first launch, use Privacy & Security → Open Anyway only after verifying the download and deciding you trust it. Do not disable system protection.
 
-The Mac GUI processes local files and offers local translation only. Model weights download on first use; cached models work offline. Start with CPU. CUDA and Windows-only Hy-MT2 are rejected before a job starts. The default local translation model is M2M100-418M. No accounts or cloud service are required.
+The Mac GUI processes local files. Translation can use a local model or the Google provider; Google translation requires a network connection. Model weights download on first use; cached models work offline. Start with CPU. CUDA and Windows-only Hy-MT2 are rejected before a job starts. The default local translation model is M2M100-418M. Offline mode, context, and glossary options are unavailable with Google translation. No account is required for local processing; Google requests use Google's service.
 
 **Updating on Mac:** finish running jobs and quit the app. For a `.pkg` download,
 open it and follow Installer to replace the copy in `/Applications`; administrator
@@ -85,9 +87,9 @@ into Applications and choose **Replace**, not **Keep Both**. Your settings, queu
 and models remain in their user-data folders. Updates are manual; there is no
 in-app updater. See the [Mac upgrade guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#mac-updates).
 
-Native tabs follow light/dark appearance, Finder can open media in the app, and Command shortcuts control files and the queue. Settings and queue state live in `~/Library/Application Support/AutoSubtitlePlus/desktop/state.json`; models stay outside the app. Replacing the app preserves them.
+The workspace follows the mockup's light appearance, Finder can open media in the app, and Command shortcuts control files and the queue. Settings and queue state live in `~/Library/Application Support/AutoSubtitlePlus/desktop/state.json`; models stay outside the app. Replacing the app preserves them.
 
-![macOS desktop with native settings tabs](assets/screenshots/desktop-macos.png)
+![Redesigned macOS queue with example media, queue controls, drag-and-drop area, and live resource meters](assets/screenshots/desktop-macos.png)
 
 [Build and validation instructions](packaging/macos.md). Windows compiled downloads are listed in the [Downloads](#downloads) section above.
 

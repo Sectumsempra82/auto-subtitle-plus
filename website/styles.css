@@ -8,3 +8,29 @@
 
 .translation p.transcript-note{padding:0 22px 22px;margin:0;font-size:14px;line-height:1.8}
 #transcription pre{white-space:pre-wrap;overflow-wrap:anywhere}
+
+.mac-showcase{padding-bottom:88px;border-bottom:1px solid var(--line)}
+.mac-showcase-heading{display:grid;grid-template-columns:1fr .82fr;gap:72px;align-items:start}
+.mac-showcase .section-heading{max-width:600px}
+.mac-showcase h2{font-size:clamp(34px,4.1vw,48px)}
+.mac-showcase-details{padding:25px 28px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.mac-platform{color:#dce5ff;font-size:13px;font-weight:650;letter-spacing:.3px;margin:0 0 18px}
+.mac-platform span{color:var(--blue);padding:0 5px}
+.mac-highlights{list-style:none;padding:0;margin:0 0 18px;color:#d6dceb;font-size:14px}
+.mac-highlights li{padding:8px 0 8px 25px;position:relative;border-bottom:1px solid #292e3a}
+.mac-highlights li:last-child{border-bottom:0}
+.mac-highlights li:before{content:"✓";position:absolute;left:0;color:var(--blue)}
+.mac-requirements{font-size:12px;line-height:1.8;margin-bottom:20px}
+.mac-actions{display:flex;align-items:center;flex-wrap:wrap;gap:17px}
+.mac-actions .button{min-height:44px;padding:10px 17px}
+.mac-release{font-size:11px;line-height:1.9;margin:16px 0 0}
+.mac-release a{color:#b6caff;text-decoration:underline;text-underline-offset:3px}
+.mac-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:38px}
+.mac-shot{min-width:0;margin:0;padding:8px;background:#171b24;border:1px solid #303747;border-radius:11px;overflow:hidden}
+.mac-shot>a{display:block;border-radius:6px;overflow:hidden;background:#0d1016}
+.mac-shot img{width:100%;aspect-ratio:1.45;object-fit:contain}
+.mac-shot figcaption{display:grid;gap:3px;padding:13px 9px 9px;font-size:12px;color:#aab3c6;line-height:1.65}
+.mac-shot figcaption strong{font-size:14px;color:#e6eaf4;font-weight:600}
+.mac-platform-note{font-size:11px;line-height:1.7;margin:18px 0 0;color:#818b9f}
+@media(max-width:760px){.mac-showcase{padding-bottom:64px}.mac-showcase-heading{grid-template-columns:1fr;gap:8px}.mac-showcase-details{padding:22px}.mac-gallery{gap:16px;margin-top:24px}.mac-shot{padding:5px}.mac-shot figcaption{padding:10px 5px 6px;font-size:11px}.mac-shot figcaption strong{font-size:13px}}
+@media(max-width:520px){.mac-gallery{grid-template-columns:1fr}.mac-shot img{aspect-ratio:1.45}.mac-showcase h2 br{display:none}}

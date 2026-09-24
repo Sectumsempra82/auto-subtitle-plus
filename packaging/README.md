@@ -145,4 +145,4 @@ superseded full-bundle validation path; the rebuild shortcut no longer calls the
 
 ## macOS Apple Silicon
 
-The Mac preview uses a bundled `.app`, independently of the Windows bootstrap ZIPs. See [Mac packaging and validation](macos.md) and [release notes](RELEASE-v0.3.0-rc.3.md). FFmpeg remains a separate prerequisite.
+The Mac desktop uses a bundled `.app`, independently of the Windows bootstrap ZIPs. Release `v0.3.0-rc.9` adds a redesigned Mac-only GUI while leaving the Windows GUI unchanged. See [Mac packaging and validation](macos.md) and [release notes](RELEASE-v0.3.0-rc.9.md). FFmpeg remains a separate prerequisite.

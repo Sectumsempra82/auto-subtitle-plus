@@ -99,6 +99,7 @@ class SettingsPanel(QWidget):
         self.setMinimumHeight(250)
 
         self.tabs = QTabWidget(self)
+        self.tabs.setObjectName("workflowTabs")
         self.tabs.setMinimumWidth(0)
         self.tabs.setElideMode(Qt.TextElideMode.ElideNone)
         self.tabs.tabBar().setExpanding(False)
@@ -316,17 +317,21 @@ class SettingsPanel(QWidget):
         form = self._form_tab("Translate")
         self.translate_enabled = QCheckBox()
         self.translate_to = self._data_combo(TARGET_LANGUAGES)
-        self.translation_engine = self._combo(("local",) if sys.platform == "darwin" else ("local", "google"))
+        self.translation_engine = self._combo(("local", "google"))
         self.translation_route = self._combo(("direct", "via-en"))
         self.translation_model = self._combo((), editable=True)
         self.translation_device = self._combo(("auto", "cpu", "cuda"))
         self.bilingual = QCheckBox()
         self.context = QPlainTextEdit()
         self.context.setFixedHeight(72)
+        if sys.platform == "darwin":
+            self.context.setPlaceholderText("Add topic, terminology, speakers, or translation instructions…")
         self.context.setMinimumWidth(0)
         self.context.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.glossary = QPlainTextEdit()
         self.glossary.setFixedHeight(72)
+        if sys.platform == "darwin":
+            self.glossary.setPlaceholderText('{"source term": "preferred translation"}')
         self.glossary.setMinimumWidth(0)
         self.glossary.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.route_preview = QLabel("")
@@ -685,6 +690,27 @@ class SettingsPanel(QWidget):
         for widget in (self.translation_model, self.translation_device, self.open_model):
             widget.setEnabled(translating and local)
         self._refresh_translation_models(self.translation_model.currentText().strip() or None)
+        if sys.platform == "darwin":
+            self._sync_translation_help(translating, local)
+
+    def _sync_translation_help(self, translating: bool, local: bool) -> None:
+        """Keep the visible affordances and hover help aligned with the active route."""
+        if not translating:
+            self.context.setPlaceholderText("Enable Translate to add context for the translated output…")
+            self.glossary.setPlaceholderText("Enable Translate to add preferred term translations…")
+            self.context.setToolTip("Translation is disabled. Enable Translate above to provide optional context for the translated output.")
+            self.glossary.setToolTip("Translation is disabled. Enable Translate above to provide a JSON glossary of preferred term translations.")
+            return
+        if not local:
+            self.context.setPlaceholderText("Google translation does not use context. Clear this field to continue…")
+            self.glossary.setPlaceholderText("Google translation does not use a glossary. Clear this field to continue…")
+            self.context.setToolTip("Google translation does not support context. Clear this field or choose a contextual local model.")
+            self.glossary.setToolTip("Google translation does not support glossaries. Clear this field or choose a contextual local model.")
+            return
+        self.context.setPlaceholderText("Add topic, terminology, speakers, or translation instructions…")
+        self.glossary.setPlaceholderText('{"source term": "preferred translation"}')
+        self.context.setToolTip("Optional context for a contextual local model. Describe the topic, speakers, tone, or terminology. Review the result; this is guidance, not a guarantee.")
+        self.glossary.setToolTip('Optional JSON object for the selected translation route. Keys and values must be strings, for example {"hello": "ciao"}.')
 
         beside = self.beside_input.isChecked()
         self.folder_output.blockSignals(True)
@@ -760,9 +786,7 @@ class SettingsPanel(QWidget):
             return
         if values["device"] == "cuda" or (values["translate_to"] and values["translation_device"] == "cuda"):
             raise ValueError("CUDA is not available on macOS. Choose Auto or CPU. Apple GPU acceleration is not supported by this desktop workflow yet.")
-        if values["translate_to"] and values["translation_engine"] != "local":
-            raise ValueError("The Mac desktop uses local translation only.")
-        if values["translate_to"] and (values["translation_model"] or "").startswith("hy-mt2"):
+        if values["translate_to"] and values["translation_engine"] == "local" and (values["translation_model"] or "").startswith("hy-mt2"):
             raise ValueError("The managed Hy-MT2 runtime is Windows-only. Choose M2M100, NLLB, MADLAD or a supported OPUS language pair for local translation on Mac.")
 
     def _source_files_present(self, spec: Any) -> bool:
@@ -782,6 +806,8 @@ class SettingsPanel(QWidget):
             raise ValueError("Translation requires a target language")
         if values["translation_engine"] == "google" and values["offline"]:
             raise ValueError("Offline mode cannot use Google translation")
+        if values["translation_engine"] == "google" and (values["context"] or values["glossary"]):
+            raise ValueError("Google translation does not support context or glossaries. Clear those fields or choose a contextual local model.")
         if values["translation_route"] == "via-en":
             if self._is_english(values["language"]) or self._is_english(values["translate_to"]):
                 raise ValueError("via-en requires non-English source and target languages")

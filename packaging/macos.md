@@ -1,6 +1,6 @@
 # macOS release packaging
 
-The v0.3.0-rc.8 Apple Silicon `.app` bundles Python, Qt and the processing libraries. It does not depend on a checkout or virtual environment. FFmpeg/ffprobe must be installed separately; models download on demand. No media, settings, model weights or credentials belong in the bundle.
+The v0.3.0-rc.9 Apple Silicon `.app` bundles Python, Qt and the processing libraries, and introduces the redesigned Mac-only desktop workspace. Queue, Speech, Translate, History/output review, Settings and Help have dedicated navigation; the Windows GUI keeps its existing interface. The app does not depend on a checkout or virtual environment. FFmpeg/ffprobe must be installed separately; models download on demand. Speech recognition and local model translation run on-device. Google translation is also available and requires a network connection; Offline mode, context and glossary options are rejected with that provider. No account is required for local processing. No media, settings, model weights or credentials belong in the bundle.
 
 Requires macOS 26+ and Apple Silicon. This build was validated on macOS 27.0; Intel and other macOS versions are unvalidated. The bundle is ad-hoc signed, not Developer ID signed or notarized. See [first-launch instructions](MACOS.txt).
 
@@ -13,7 +13,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[gui,faster]'
 .venv/bin/python -m pip install 'pyinstaller==6.22.2'
 .venv/bin/python tools/package_macos_sources.py
-.venv/bin/python tools/package_macos.py --build-number 7
+.venv/bin/python tools/package_macos.py --build-number 8
 ```
 
 Outputs:
@@ -27,7 +27,7 @@ Outputs:
 
 Use a positive, monotonically increasing `--build-number` for every distributed
 Mac build, including rebuilds and release candidates. Existing ZIP releases use
-build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used build 6; rc.8 uses build 7. The number becomes the app's
+build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used build 6; rc.8 used build 7; rc.9 uses build 8. The number becomes the app's
 `CFBundleVersion` and the installer receipt version. Keep increasing it across
 marketing-version changes; do not reuse or reset it. Update the app's marketing
 version in `macos.spec` when preparing a new version as before.
@@ -44,7 +44,7 @@ Qt and PySide6 remain dynamically linked. Their LGPL/GPL notices and matching so
 
 Publish the `.pkg` and its checksum alongside the ZIP and required native sources.
 The website prefers a PKG when the newest Mac release contains one and falls back
-to ZIP for older releases. Static download links point to the rc.8 installer, so they also work when the
+to ZIP for older releases. Static download links point to the rc.9 installer, so they also work when the
 GitHub release API is unavailable.
 
 The user downloads the PKG, finishes their current job, quits the app and follows
@@ -92,4 +92,4 @@ Extract the release ZIP to a different directory, use a minimal PATH and launch 
 
 For an offline transcription test, first cache Whisper `tiny`, then pass `--smoke-run --smoke-media /path/to/speech.wav --smoke-asr-model tiny --smoke-backend stable --smoke-no-translation --smoke-output-dir /tmp/asp-smoke/outputs --smoke-timeout-ms 120000`. The default diagnostic translation test uses Faster-Whisper and OPUS en→fr; prepare their models separately. Use nonprivate sample media and a new output directory.
 
-The GUI and both worker subprocess boundaries must function without the source checkout or `.venv`. Check all five settings tabs at minimum/default/large sizes in both appearances. A release on one developer Mac does not establish clean-machine or every-model certification.
+The GUI and both worker subprocess boundaries must function without the source checkout or `.venv`. Check Speech, Translate, Queue, History/output review, and each Settings section at minimum/default/large window sizes. The workspace uses the mockup's light appearance. A release on one developer Mac does not establish clean-machine or every-model certification.
