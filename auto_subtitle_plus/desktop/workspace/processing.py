@@ -1,4 +1,4 @@
-"""Live queue status and output review for the macOS desktop."""
+"""Live queue status and output review for the desktop workspace."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 
 from ..state import QueueItem
 from .icons import heading_icon
+from .wording import DEVICE
 
 
 class ProcessingScreen(QWidget):
@@ -32,10 +33,10 @@ class ProcessingScreen(QWidget):
         heading_copy = QVBoxLayout()
         heading_copy.setSpacing(2)
         self.title = QLabel("Processing")
-        self.title.setObjectName("macPageTitle")
+        self.title.setObjectName("workspacePageTitle")
         heading_copy.addWidget(self.title)
-        self.description = QLabel("Transcribing and translating files. This runs locally on your Mac.")
-        self.description.setObjectName("macPageSubtitle")
+        self.description = QLabel(f"Transcribing and translating files. This runs locally on your {DEVICE}.")
+        self.description.setObjectName("workspacePageSubtitle")
         heading_copy.addWidget(self.description)
         page_heading.addLayout(heading_copy)
         page_heading.addStretch(1)
@@ -43,14 +44,14 @@ class ProcessingScreen(QWidget):
 
         # Summary card mirrors the mockup's media, stage, timing, and progress hierarchy.
         self.status_card = QFrame()
-        self.status_card.setObjectName("macStatusCard")
+        self.status_card.setObjectName("workspaceStatusCard")
         status_layout = QVBoxLayout(self.status_card)
         status_layout.setContentsMargins(12, 10, 12, 10)
         status_layout.setSpacing(8)
         summary = QHBoxLayout()
         summary.setSpacing(12)
         self.media_icon = QLabel()
-        self.media_icon.setObjectName("macMediaThumbnail")
+        self.media_icon.setObjectName("workspaceMediaThumbnail")
         self.media_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.media_icon.setFixedSize(64, 64)
         self.media_icon.setPixmap(self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon).pixmap(48, 48))
@@ -93,7 +94,7 @@ class ProcessingScreen(QWidget):
         layout.addWidget(self.status_card)
 
         review_card = QFrame()
-        review_card.setObjectName("macCard")
+        review_card.setObjectName("workspaceCard")
         review_layout = QVBoxLayout(review_card)
         review_layout.setContentsMargins(8, 4, 8, 8)
         review_layout.setSpacing(0)
@@ -124,7 +125,7 @@ class ProcessingScreen(QWidget):
         layout.addWidget(review_card, 1)
 
         self.files_card = QFrame()
-        self.files_card.setObjectName("macCompletedCard")
+        self.files_card.setObjectName("workspaceCompletedCard")
         files_layout = QVBoxLayout(self.files_card)
         files_layout.setContentsMargins(12, 8, 12, 8)
         files_layout.setSpacing(6)

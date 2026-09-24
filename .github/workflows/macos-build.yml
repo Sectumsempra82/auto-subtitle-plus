@@ -1,0 +1,90 @@
+name: macOS arm64 build
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Apple Silicon; the app requires macOS 26+ (see packaging/macos.md).
+    runs-on: macos-15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Install Python 3.12 and FFmpeg
+        run: |
+          brew install python@3.12 ffmpeg
+          echo "$(brew --prefix python@3.12)/bin" >> "$GITHUB_PATH"
+
+      - name: Create the build virtual environment
+        run: |
+          python3.12 -m venv .venv
+          .venv/bin/python -m pip install --upgrade pip
+          .venv/bin/python -m pip install -e '.[gui,faster]'
+          .venv/bin/python -m pip install 'pyinstaller==6.22.2'
+
+      - name: Run regression tests
+        env:
+          TMPDIR: /private/tmp
+          QT_QPA_PLATFORM: offscreen
+        run: .venv/bin/python -m unittest discover -s tests -q 2>&1 | tee regression-tests.log
+
+      - name: Upload regression log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-regression-log-${{ github.sha }}
+          path: regression-tests.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Determine the Mac bundle build number
+        id: build-number
+        # Tied to the release candidate number (0.3.0rc10 -> 10) so it only ever
+        # increases as long as rc numbers are used sequentially; see packaging/macos.md.
+        run: |
+          number=$(.venv/bin/python -c "import re; from pathlib import Path; print(re.search(r'rc(\d+)', Path('setup.py').read_text()).group(1))")
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+
+      - name: Collect pinned native-library sources
+        run: .venv/bin/python tools/package_macos_sources.py
+
+      - name: Build the app, installer and ZIP
+        run: .venv/bin/python tools/package_macos.py --build-number ${{ steps.build-number.outputs.number }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoSubtitlePlus-macOS-arm64-${{ github.sha }}
+          path: |
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg.sha256
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.zip
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.zip.sha256
+            dist/AutoSubtitlePlus-macOS-NativeSources.tar
+            dist/AutoSubtitlePlus-macOS-NativeSources.tar.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish tagged release assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          # The Windows workflow generates the release notes for this tag;
+          # this job only attaches the Mac assets to the same release.
+          files: |
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.pkg.sha256
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.zip
+            dist/AutoSubtitlePlus-GUI-macOS-arm64.zip.sha256
+            dist/AutoSubtitlePlus-macOS-NativeSources.tar
+            dist/AutoSubtitlePlus-macOS-NativeSources.tar.sha256

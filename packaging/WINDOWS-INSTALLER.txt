@@ -1,23 +1,38 @@
-Auto Subtitle Plus - Windows installation and manual updates
+Auto Subtitle Plus - Windows setup and manual updates
 
-Installs the desktop and command-line editions for your Windows account without
-administrator rights. First launch prepares verified app-local dependencies.
-Models download separately; CPU is the default and CUDA remains opt-in.
+This is the one Windows download: a single EXE for both the desktop and the
+command-line editions. It asks how to set it up, then a destination folder.
 
-Finish running jobs and close both editions before installing an update.
-Run the newer installer without uninstalling first. It reuses the registered
-installation folder, replaces application code and preserves the data folder,
-including settings, queue, models, cached downloads and prepared runtimes.
-The same version can be reinstalled. Older installer versions are rejected.
+- Install: adds a Start Menu entry, an optional desktop shortcut and an
+  uninstaller. Program Files is the suggested folder.
+- Portable: only copies the application files into the folder you choose
+  (a USB drive or any folder you manage yourself); nothing else on this
+  computer changes and no uninstaller is registered.
 
-Upgrading from a portable ZIP: select the existing extracted application folder
-(the one containing auto_subtitle_plus_gui.exe or auto_subtitle_plus.exe).
-Its data folder stays in place. Other portable copies are not moved or deleted.
-An existing AUTO_SUBTITLE_PLUS_DATA_DIR override continues to take precedence.
+Because the suggested folder is inside Program Files, Setup always asks
+Windows to run elevated (one UAC prompt) even for Portable, which still only
+copies files into the folder you picked. First launch afterwards prepares
+verified app-local dependencies. Models download separately; CPU is the
+default and CUDA remains opt-in.
+
+Finish running jobs and close both editions before updating. Run the newer
+EXE without uninstalling first and pick the same folder; it replaces
+application code and preserves the data folder, including settings, queue,
+models, cached downloads and prepared runtimes. If that folder already has
+files, Setup asks to update/overwrite it in place. The same version can be
+reinstalled. Older versions are rejected.
+
+Upgrading an existing copy (Install or Portable, from any earlier release):
+pick its existing application folder (the one containing
+auto_subtitle_plus_gui.exe or auto_subtitle_plus.exe). Its data folder stays
+in place. Other copies elsewhere are not moved or deleted. An existing
+AUTO_SUBTITLE_PLUS_DATA_DIR override continues to take precedence.
 
 Updates are manual. Setup does not launch the app or download dependencies.
-Uninstall removes installed application files but preserves data and exports.
-Delete user data yourself only when you no longer want it.
+Uninstalling an Install-mode setup removes application files but preserves
+data and exports; a Portable folder has no uninstaller, so remove it by
+deleting the folder yourself. Delete user data yourself only when you no
+longer want it.
 
 This release is unsigned. Windows may show a SmartScreen warning; verify the
 download and its SHA256 before deciding to run it. Do not disable protection.

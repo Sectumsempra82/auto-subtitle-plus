@@ -17,11 +17,13 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QHBoxLayout,
     QLabel,
+    QListView,
     QPlainTextEdit,
     QPushButton,
     QScrollArea,
     QSizePolicy,
     QSpinBox,
+    QStyledItemDelegate,
     QTabWidget,
     QVBoxLayout,
     QWidget,
@@ -101,11 +103,12 @@ class SettingsPanel(QWidget):
         self.tabs = QTabWidget(self)
         self.tabs.setObjectName("workflowTabs")
         self.tabs.setMinimumWidth(0)
-        self.tabs.setElideMode(Qt.TextElideMode.ElideNone)
+        # Five tabs have to share a narrow panel: shrink the labels to fit
+        # instead of hiding tabs behind scroll buttons.
+        self.tabs.setElideMode(Qt.TextElideMode.ElideRight)
         self.tabs.tabBar().setExpanding(False)
-        self.tabs.tabBar().setUsesScrollButtons(True)
-        if sys.platform != "darwin":
-            self.tabs.setStyleSheet("QTabBar::tab { min-width: 0px; padding: 9px 8px; }")
+        self.tabs.tabBar().setUsesScrollButtons(False)
+        self.tabs.setStyleSheet("QTabBar::tab { min-width: 0px; padding: 9px 6px; }")
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         self.transcript_button = QPushButton("Text transcript (TXT) settings")
@@ -839,8 +842,23 @@ class SettingsPanel(QWidget):
             QDesktopServices.openUrl(QUrl(self._last_model_url))
 
     @staticmethod
+    def _prepare_combo(combo: QComboBox) -> None:
+        """Use a plain list popup so stylesheet colors apply to every item.
+
+        Native popups (Windows and macOS) paint the current item themselves and
+        ignore the stylesheet, which leaves the selected row unreadable.
+        """
+        view = QListView()
+        view.setUniformItemSizes(True)
+        view.setTextElideMode(Qt.TextElideMode.ElideRight)
+        combo.setView(view)
+        combo.setItemDelegate(QStyledItemDelegate(combo))
+        view.setItemDelegate(QStyledItemDelegate(view))
+
+    @staticmethod
     def _combo(items: tuple[str, ...], editable: bool = False) -> QComboBox:
         combo = QComboBox()
+        SettingsPanel._prepare_combo(combo)
         combo.setEditable(editable)
         combo.addItems(items)
         combo.setMinimumContentsLength(8)
@@ -855,6 +873,7 @@ class SettingsPanel(QWidget):
     @staticmethod
     def _data_combo(items: tuple[tuple[str, str], ...], editable: bool = False) -> QComboBox:
         combo = QComboBox()
+        SettingsPanel._prepare_combo(combo)
         combo.setEditable(editable)
         for value, label in items:
             combo.addItem(label, value)

@@ -1,6 +1,6 @@
 # macOS release packaging
 
-The v0.3.0-rc.9 Apple Silicon `.app` bundles Python, Qt and the processing libraries, and introduces the redesigned Mac-only desktop workspace. Queue, Speech, Translate, History/output review, Settings and Help have dedicated navigation; the Windows GUI keeps its existing interface. The app does not depend on a checkout or virtual environment. FFmpeg/ffprobe must be installed separately; models download on demand. Speech recognition and local model translation run on-device. Google translation is also available and requires a network connection; Offline mode, context and glossary options are rejected with that provider. No account is required for local processing. No media, settings, model weights or credentials belong in the bundle.
+The Apple Silicon `.app` bundles Python, Qt and the processing libraries; rc.9 introduced the redesigned desktop workspace. Queue, Speech, Translate, History/output review, Settings and Help have dedicated navigation; the Windows GUI shows the same workspace. The app does not depend on a checkout or virtual environment. FFmpeg/ffprobe must be installed separately; models download on demand. Speech recognition and local model translation run on-device. Google translation is also available and requires a network connection; Offline mode, context and glossary options are rejected with that provider. No account is required for local processing. No media, settings, model weights or credentials belong in the bundle.
 
 Requires macOS 26+ and Apple Silicon. This build was validated on macOS 27.0; Intel and other macOS versions are unvalidated. The bundle is ad-hoc signed, not Developer ID signed or notarized. See [first-launch instructions](MACOS.txt).
 
@@ -13,7 +13,7 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -e '.[gui,faster]'
 .venv/bin/python -m pip install 'pyinstaller==6.22.2'
 .venv/bin/python tools/package_macos_sources.py
-.venv/bin/python tools/package_macos.py --build-number 8
+.venv/bin/python tools/package_macos.py --build-number 10
 ```
 
 Outputs:
@@ -27,10 +27,26 @@ Outputs:
 
 Use a positive, monotonically increasing `--build-number` for every distributed
 Mac build, including rebuilds and release candidates. Existing ZIP releases use
-build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used build 6; rc.8 used build 7; rc.9 uses build 8. The number becomes the app's
-`CFBundleVersion` and the installer receipt version. Keep increasing it across
-marketing-version changes; do not reuse or reset it. Update the app's marketing
-version in `macos.spec` when preparing a new version as before.
+build 3; build 4 was a local installer prototype; rc.4 used build 5; rc.7 used
+build 6; rc.8 used build 7; rc.9 used build 8. Starting with rc.10, the build
+number is simply the release candidate number itself (rc.10 uses build 10, rc.11
+would use build 11, and so on), computed automatically by
+`.github/workflows/macos-build.yml` from the `rcN` suffix in `setup.py`'s
+version, so it no longer needs manual tracking here as long as rc numbers keep
+increasing (10 is still greater than the last manually tracked build, 8). The
+number becomes the app's `CFBundleVersion` and the installer receipt version.
+Keep increasing it across marketing-version changes; do not reuse or reset it.
+Update the app's marketing version in `macos.spec` when preparing a new version
+as before.
+
+## Automated release builds
+
+`.github/workflows/macos-build.yml` runs this same sequence on a GitHub-hosted
+Apple Silicon runner whenever a `v*` tag is pushed (or via manual dispatch),
+and attaches the PKG, ZIP, native-source archive and their SHA-256 files to
+that tag's GitHub Release. `.github/workflows/windows-build.yml` does the
+same for the Windows EXE on the same tag, so every tagged release publishes
+both platforms together without a separate manual Mac build step.
 
 The ZIP preserves bundle symlinks. The builder verifies the app's ad-hoc signature and collects dependency license files and an environment inventory under `Contents/Resources/licenses`. Inspect the inventory when changing dependency versions. PyInstaller's [Mac packaging notes](https://pyinstaller.org/en/stable/feature-notes.html#macos-multi-arch-support) explain architecture and signing.
 
@@ -44,8 +60,9 @@ Qt and PySide6 remain dynamically linked. Their LGPL/GPL notices and matching so
 
 Publish the `.pkg` and its checksum alongside the ZIP and required native sources.
 The website prefers a PKG when the newest Mac release contains one and falls back
-to ZIP for older releases. Static download links point to the rc.9 installer, so they also work when the
-GitHub release API is unavailable.
+to ZIP for older releases. Static download links point at the latest release's
+installer via GitHub's `/releases/latest/download/` redirect, so they also work
+when the GitHub release API is unavailable.
 
 The user downloads the PKG, finishes their current job, quits the app and follows
 macOS Installer. The destination is always `/Applications/Auto Subtitle Plus.app`;

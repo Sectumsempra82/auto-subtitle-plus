@@ -1,4 +1,4 @@
-"""Mac settings forms built from the existing, behavior-owning controls."""
+"""Workspace settings forms built from the existing, behavior-owning controls."""
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
@@ -17,13 +17,14 @@ from PySide6.QtWidgets import (
 )
 
 from .icons import heading_icon
+from .wording import COMPUTE_TYPE_HINT, DEVICE
 
 FIELD_HINTS = {
     "Backend": "Speech recognition engine to use.",
     "Model": "Select the speech recognition model.",
     "Audio language": "Language spoken in the audio.",
     "Device": "Auto selects an available processing device.",
-    "Compute type": "Not supported on this Mac.",
+    "Compute type": COMPUTE_TYPE_HINT,
     "Inference batch": "Larger batches need more memory.",
     "VAD": "Detect voice activity and skip silence.",
     "Word timestamps": "Include word-level timestamps.",
@@ -63,7 +64,7 @@ FIELD_HINTS = {
 }
 
 
-class MacForms(QWidget):
+class WorkspaceForms(QWidget):
     """Presentation for Speech, Translate, and the remaining settings.
 
     SettingsPanel remains the owner of every control's state, validation,
@@ -77,7 +78,7 @@ class MacForms(QWidget):
         self.pages = QStackedWidget(self)
         self._contents: dict[str, QWidget] = {}
         self.speech = self._page(
-            "Speech", "Transcribe speech to text with local AI models. Everything runs on your Mac.",
+            "Speech", f"Transcribe speech to text with local AI models. Everything runs on your {DEVICE}.",
         )
         self.translate = self._page(
             "Translate", "Translate transcripts to create subtitles in your target language.",
@@ -107,22 +108,22 @@ class MacForms(QWidget):
 
     def _page(self, title: str, description: str) -> QWidget:
         page = QWidget()
-        page.setObjectName("macFormPage")
+        page.setObjectName("workspaceFormPage")
         column = QVBoxLayout(page)
         column.setContentsMargins(8, 8, 8, 8)
         column.setSpacing(12)
         heading = QHBoxLayout()
         glyph = QLabel()
-        glyph.setObjectName("macFormGlyph")
+        glyph.setObjectName("workspaceFormGlyph")
         glyph.setPixmap(heading_icon(title).pixmap(QSize(28, 28)))
         glyph.setAccessibleName(f"{title} icon")
         heading.setSpacing(10)
         heading.addWidget(glyph, 0, Qt.AlignmentFlag.AlignTop)
         words = QVBoxLayout()
         title_label = QLabel(title)
-        title_label.setObjectName("macPageTitle")
+        title_label.setObjectName("workspacePageTitle")
         description_label = QLabel(description)
-        description_label.setObjectName("macPageSubtitle")
+        description_label.setObjectName("workspacePageSubtitle")
         description_label.setWordWrap(True)
         words.addWidget(title_label)
         words.addWidget(description_label)
@@ -143,7 +144,7 @@ class MacForms(QWidget):
 
     def _card(self, parent: QWidget, title: str | None = None) -> tuple[QFrame, QGridLayout]:
         card = QFrame(parent)
-        card.setObjectName("macCard")
+        card.setObjectName("workspaceCard")
         grid = QGridLayout(card)
         grid.setContentsMargins(14, 12, 14, 14)
         grid.setHorizontalSpacing(12)
@@ -151,13 +152,13 @@ class MacForms(QWidget):
         grid.setColumnMinimumWidth(0, 118)
         if title:
             label = QLabel(title)
-            label.setObjectName("macCardTitle")
+            label.setObjectName("workspaceCardTitle")
             grid.addWidget(label, 0, 0, 1, 3)
         return card, grid
 
     def _row(self, grid: QGridLayout, row: int, label: str, control: QWidget, help_text: str | None = None) -> None:
         name = QLabel(label)
-        name.setObjectName("macFieldLabel")
+        name.setObjectName("workspaceFieldLabel")
         grid.addWidget(name, row, 0, Qt.AlignmentFlag.AlignVCenter)
         grid.addWidget(control, row, 1)
         tip = help_text or FIELD_HINTS.get(label) or control.accessibleDescription() or control.toolTip()
@@ -167,7 +168,7 @@ class MacForms(QWidget):
             grid.setColumnStretch(2, 4)
             return
         detail = QLabel(tip)
-        detail.setObjectName("macFieldHint")
+        detail.setObjectName("workspaceFieldHint")
         detail.setWordWrap(True)
         detail.setMinimumWidth(100)
         detail.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
@@ -202,11 +203,11 @@ class MacForms(QWidget):
         guide_button = self._move(s.hardware_help_button, card)
         guide = self._move(s.hardware_help, card)
         side = QFrame(card)
-        side.setObjectName("macSideCard")
+        side.setObjectName("workspaceSideCard")
         side_layout = QVBoxLayout(side)
         side_layout.setContentsMargins(10, 8, 10, 8)
         side_title = QLabel("About speech recognition")
-        side_title.setObjectName("macSideTitle")
+        side_title.setObjectName("workspaceSideTitle")
         side_layout.addWidget(side_title)
         side_copy = QLabel("Transcribe audio to create subtitles or text transcripts. Backend is the engine; model is the trained speech recognizer.")
         side_copy.setWordWrap(True)
@@ -247,14 +248,14 @@ class MacForms(QWidget):
 
     def _settings_page(self) -> QWidget:
         page = QWidget()
-        page.setObjectName("macFormPage")
+        page.setObjectName("workspaceFormPage")
         outer = QVBoxLayout(page)
         outer.setContentsMargins(8, 8, 8, 8)
         outer.setSpacing(12)
         title = QLabel("Settings")
-        title.setObjectName("macPageTitle")
+        title.setObjectName("workspacePageTitle")
         desc = QLabel("Subtitle layout, output files, and system behavior.")
-        desc.setObjectName("macPageSubtitle")
+        desc.setObjectName("workspacePageSubtitle")
         outer.addWidget(title)
         outer.addWidget(desc)
         body = QHBoxLayout()
@@ -265,7 +266,7 @@ class MacForms(QWidget):
         self.settings_stack = QStackedWidget()
         for index, name in enumerate(("Layout", "Files", "System")):
             button = QPushButton(name)
-            button.setObjectName("macSettingsNav")
+            button.setObjectName("workspaceSettingsNav")
             button.setCheckable(True)
             button.clicked.connect(lambda checked=False, i=index: self.settings_stack.setCurrentIndex(i))
             button.clicked.connect(lambda checked=False, selected=name: self._check_settings_button(selected))
@@ -326,11 +327,11 @@ class MacForms(QWidget):
         output_row.addWidget(self._move(s.output_dir, files_card), 1)
         output_row.addWidget(self._move(s.browse_output_dir, files_card))
         output_label = QLabel("Output folder")
-        output_label.setObjectName("macFieldLabel")
+        output_label.setObjectName("workspaceFieldLabel")
         files_grid.addWidget(output_label, 12, 0)
         files_grid.addLayout(output_row, 12, 1)
         output_hint = QLabel(s.output_dir.accessibleDescription())
-        output_hint.setObjectName("macFieldHint")
+        output_hint.setObjectName("workspaceFieldHint")
         output_hint.setWordWrap(True)
         files_grid.addWidget(output_hint, 12, 2)
         system_fields = (
@@ -343,11 +344,11 @@ class MacForms(QWidget):
         cache_row.addWidget(self._move(s.translation_cache_dir, system_card), 1)
         cache_row.addWidget(self._move(s.browse_cache_dir, system_card))
         cache_label = QLabel("Cache folder")
-        cache_label.setObjectName("macFieldLabel")
+        cache_label.setObjectName("workspaceFieldLabel")
         system_grid.addWidget(cache_label, 5, 0)
         system_grid.addLayout(cache_row, 5, 1)
         cache_hint = QLabel(s.translation_cache_dir.accessibleDescription())
-        cache_hint.setObjectName("macFieldHint")
+        cache_hint.setObjectName("workspaceFieldHint")
         cache_hint.setWordWrap(True)
         system_grid.addWidget(cache_hint, 5, 2)
         system_grid.addWidget(self._move(s.clear_cache, system_card), 6, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)

@@ -1,6 +1,6 @@
 # v0.3.0-rc.9 — Redesigned macOS desktop
 
-This release gives the Apple Silicon desktop a new Mac-only workspace inspired by the four-screen design reference. Queue, Speech, Translate, processing/output review, Settings, and Help now have dedicated places and clearer controls. The Windows desktop keeps its existing interface; the CLI processing pipeline is unchanged.
+This release gives the Apple Silicon desktop a new workspace inspired by the four-screen design reference. Queue, Speech, Translate, processing/output review, Settings, and Help now have dedicated places and clearer controls. The Windows desktop kept its existing interface in this release and adopts the same workspace after it; the CLI processing pipeline is unchanged.
 
 ## New Mac workspace
 

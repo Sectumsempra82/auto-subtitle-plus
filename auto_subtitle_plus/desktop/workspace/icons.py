@@ -1,4 +1,4 @@
-"""Lightweight, resolution-independent Mac workspace icons."""
+"""Lightweight, resolution-independent workspace icons."""
 from __future__ import annotations
 
 from collections.abc import Callable
@@ -34,7 +34,7 @@ def action_icon(name: str, size: int = 16, color: str = _NAV) -> QIcon:
 def _render(name: str, size: int, color: str) -> QPixmap:
     draw = _DRAWERS.get(name.casefold())
     if draw is None:
-        raise ValueError(f"Unknown Mac icon: {name!r}")
+        raise ValueError(f"Unknown workspace icon: {name!r}")
     pixmap = QPixmap(size, size)
     pixmap.fill(Qt.GlobalColor.transparent)
     painter = QPainter(pixmap)

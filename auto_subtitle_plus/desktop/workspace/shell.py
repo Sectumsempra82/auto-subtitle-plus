@@ -1,26 +1,28 @@
-"""Mac-only navigation around the existing desktop processing controls."""
+"""Workspace navigation around the existing desktop processing controls."""
 from __future__ import annotations
 
 import sys
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor, QFontDatabase, QKeySequence, QPalette
+from PySide6.QtGui import QColor, QFontDatabase, QKeySequence, QPalette, QShortcut
 from PySide6.QtWidgets import (
     QApplication, QFrame, QHBoxLayout, QLabel, QLineEdit, QPushButton,
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
-from ..window import DesktopApplication, MainWindow, apply_theme
-from .forms import MacForms
+from .. import theme_application
+from ..window import DesktopApplication, MainWindow
+from .forms import WorkspaceForms
 from .help import HelpScreen
 from .icons import nav_icon
 from .processing import ProcessingScreen
-from .queue import MacQueueView
+from .queue import WorkspaceQueueView
 from .theme import DARK_STYLE, LIGHT_STYLE
+from .wording import SEARCH_SHORTCUT, SEARCH_SHORTCUT_LABEL
 
 
-class MacMainWindow(MainWindow):
-    """Keep MainWindow's queue lifecycle and present its controls in Mac pages."""
+class WorkspaceMainWindow(MainWindow):
+    """Keep MainWindow's queue lifecycle and present its controls in workspace pages."""
 
     def __init__(self, store=None, monitor: bool = True, runner=None) -> None:
         self._item_translation: dict[str, bool] = {}
@@ -71,13 +73,13 @@ class MacMainWindow(MainWindow):
         old_root.deleteLater()
 
         root = QWidget()
-        root.setObjectName("macRoot")
+        root.setObjectName("workspaceRoot")
         self.setCentralWidget(root)
         outer = QHBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
         sidebar = QFrame()
-        sidebar.setObjectName("macSidebar")
+        sidebar.setObjectName("workspaceSidebar")
         sidebar.setFixedWidth(184)
         nav = QVBoxLayout(sidebar)
         nav.setContentsMargins(14, 54, 14, 18)
@@ -98,7 +100,7 @@ class MacMainWindow(MainWindow):
         header.addStretch(1)
         self.search = QLineEdit()
         self.search.setPlaceholderText("Search settings…")
-        self.search.setToolTip("Find a setting by name and open its section. Command-K focuses search.")
+        self.search.setToolTip(f"Find a setting by name and open its section. {SEARCH_SHORTCUT_LABEL} focuses search.")
         self.search.setFixedWidth(215)
         self.search.returnPressed.connect(self._search_settings)
         header.addWidget(self.search)
@@ -108,8 +110,8 @@ class MacMainWindow(MainWindow):
         column.addWidget(self.pages, 1)
         self.processing = ProcessingScreen()
         self.processing.mount_details(self.details)
-        self.queue_view = MacQueueView(self, queue_panel, self.resources, self.summary)
-        self.forms = MacForms(self.settings)
+        self.queue_view = WorkspaceQueueView(self, queue_panel, self.resources, self.summary)
+        self.forms = WorkspaceForms(self.settings)
         self.settings.hide()
         self.pages.addWidget(self.queue_view)
         self.pages.addWidget(self.forms)
@@ -123,21 +125,20 @@ class MacMainWindow(MainWindow):
         for name in ("Settings", "Help"):
             self._add_nav(nav, name)
         self._select_page("Queue")
-        shortcut = self.menuBar().addAction("Search Settings")
-        shortcut.setShortcut(QKeySequence("Meta+K"))
-        shortcut.triggered.connect(self._focus_search)
+        shortcut = QShortcut(QKeySequence(SEARCH_SHORTCUT), self)
+        shortcut.activated.connect(self._focus_search)
         self.table.selectionModel().selectionChanged.connect(self._refresh_processing)
         QApplication.instance().paletteChanged.connect(lambda _: self._apply_workspace_style())
         self._apply_workspace_style()
 
     def _add_nav(self, layout: QVBoxLayout, name: str) -> None:
         button = QPushButton(f"  {name}")
-        button.setObjectName("macNav")
+        button.setObjectName("workspaceNav")
         button.setAccessibleName(name)
         button.setIcon(nav_icon(name, 18))
         button.setIconSize(QSize(18, 18))
         button.setCheckable(True)
-        button.setToolTip(f"Open {name.lower()} in the Mac workspace.")
+        button.setToolTip(f"Open {name.lower()} in the workspace.")
         button.clicked.connect(lambda checked=False, page=name: self._select_page(page))
         layout.addWidget(button)
         self.nav_buttons[name] = button
@@ -224,8 +225,8 @@ def launch() -> int:
     app = QApplication.instance() or DesktopApplication(sys.argv)
     app.setApplicationName("Auto Subtitle Plus")
     app.setOrganizationName("AutoSubtitlePlus")
-    apply_theme(app)
-    window = MacMainWindow()
+    theme_application(app)
+    window = WorkspaceMainWindow()
     if isinstance(app, DesktopApplication):
         app.window = window
         if app.pending_files:

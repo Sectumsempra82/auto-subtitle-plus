@@ -93,7 +93,7 @@ def source_archive(destination):
             for path in sorted((ROOT / base).rglob("*")):
                 if path.is_file() and path.suffix in (".py", ".ps1", ".spec", ".iss", ".html", ".json", ".md", ".txt"):
                     archive.write(path, path.relative_to(ROOT))
-        for name in ("setup.py", "LICENSE", "README.md", "Build Portable.cmd", "Build Installer.cmd"):
+        for name in ("setup.py", "LICENSE", "README.md", "Build Windows.cmd"):
             archive.write(ROOT / name, name)
 
 

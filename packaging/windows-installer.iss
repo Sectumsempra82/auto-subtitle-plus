@@ -17,9 +17,12 @@ AppName=Auto Subtitle Plus
 AppVersion={#AppVersion}
 AppPublisher=Auto Subtitle Plus contributors
 AppPublisherURL=https://github.com/Sectumsempra82/auto-subtitle-plus
-DefaultDirName={localappdata}\Programs\Auto Subtitle Plus
+DefaultDirName={autopf}\Auto Subtitle Plus
 DefaultGroupName=Auto Subtitle Plus
-PrivilegesRequired=lowest
+; One EXE serves both editions. Program Files is the default destination for
+; both, so Setup always runs elevated; a Portable choice on the mode page
+; below only changes whether shortcuts/uninstall registration are created.
+PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0
@@ -33,15 +36,16 @@ CloseApplications=no
 RestartApplications=no
 UninstallDisplayIcon={app}\auto_subtitle_plus_gui.exe
 VersionInfoVersion={#FileVersion}
-OutputBaseFilename=AutoSubtitlePlus-Setup-Windows-x64
+OutputBaseFilename=AutoSubtitlePlus-Windows-x64
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 LicenseFile=..\LICENSE
 InfoBeforeFile=WINDOWS-INSTALLER.txt
+Uninstallable=IsInstalledEdition
 
 [Tasks]
-Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
+Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked; Check: IsInstalledEdition
 
 [Files]
 Source: "{#PayloadDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -53,16 +57,20 @@ Type: filesandordirs; Name: "{app}\app\auto_subtitle_plus"
 [INI]
 Filename: "{app}\installation.ini"; Section: "Application"; Key: "Id"; String: "{#AppId}"; Flags: uninsdeleteentry
 Filename: "{app}\installation.ini"; Section: "Application"; Key: "Version"; String: "{#FileVersion}"; Flags: uninsdeleteentry
+Filename: "{app}\installation.ini"; Section: "Application"; Key: "Edition"; String: "{code:GetEditionName}"; Flags: uninsdeleteentry
 
 [UninstallDelete]
 Type: files; Name: "{app}\installation.ini"
 
 [Icons]
-Name: "{group}\Auto Subtitle Plus"; Filename: "{app}\auto_subtitle_plus_gui.exe"; WorkingDir: "{app}"
-Name: "{group}\User guide"; Filename: "https://sectumsempra82.github.io/auto-subtitle-plus/guide/"
-Name: "{autodesktop}\Auto Subtitle Plus"; Filename: "{app}\auto_subtitle_plus_gui.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\Auto Subtitle Plus"; Filename: "{app}\auto_subtitle_plus_gui.exe"; WorkingDir: "{app}"; Check: IsInstalledEdition
+Name: "{group}\User guide"; Filename: "https://sectumsempra82.github.io/auto-subtitle-plus/guide/"; Check: IsInstalledEdition
+Name: "{autodesktop}\Auto Subtitle Plus"; Filename: "{app}\auto_subtitle_plus_gui.exe"; WorkingDir: "{app}"; Tasks: desktopicon; Check: IsInstalledEdition
 
 [Code]
+var
+  EditionPage: TInputOptionWizardPage;
+
 function GetFileAttributes(Name: String): LongWord;
   external 'GetFileAttributesW@kernel32.dll stdcall';
 function OpenExclusive(Name: String; Access, Share: LongWord; Security: Integer;
@@ -70,6 +78,31 @@ function OpenExclusive(Name: String; Access, Share: LongWord; Security: Integer;
   external 'CreateFileW@kernel32.dll stdcall';
 function CloseHandle(Handle: THandle): Boolean;
   external 'CloseHandle@kernel32.dll stdcall';
+
+procedure InitializeWizard();
+begin
+  EditionPage := CreateInputOptionPage(wpWelcome,
+    'Choose Setup Type', 'How do you want to set up Auto Subtitle Plus?',
+    'Install adds a Start Menu entry, an optional desktop shortcut and an uninstaller. ' +
+    'Portable only copies the application files into the folder you choose next (for ' +
+    'example a USB drive or any folder you manage yourself) and adds nothing else to ' +
+    'this computer. Both editions prepare their own dependencies the first time they run.',
+    True, False);
+  EditionPage.Add('Install (recommended) - Start Menu shortcut and uninstaller');
+  EditionPage.Add('Portable - copy the application files only');
+  EditionPage.SelectedValueIndex := 0;
+end;
+
+// True once the user picked "Install" on the mode page (the default).
+function IsInstalledEdition(): Boolean;
+begin
+  Result := (EditionPage = nil) or (EditionPage.SelectedValueIndex = 0);
+end;
+
+function GetEditionName(Param: String): String;
+begin
+  if IsInstalledEdition() then Result := 'Installed' else Result := 'Portable';
+end;
 
 function IsLinked(Path: String): Boolean;
 var Attributes: LongWord;
@@ -113,6 +146,24 @@ begin
       until not FindNext(Found);
     finally
       FindClose(Found);
+    end;
+  end;
+end;
+
+// Ask once, right after the user confirms a destination folder that already
+// has content, whether this run should update/overwrite it in place.
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Destination: String;
+begin
+  Result := True;
+  if CurPageID = wpSelectDir then begin
+    Destination := RemoveBackslashUnlessRoot(WizardDirValue());
+    if DirExists(Destination) and DirectoryHasFiles(Destination) then begin
+      // SuppressibleMsgBox (not MsgBox) so /VERYSILENT /SUPPRESSMSGBOXES unattended
+      // runs still proceed, defaulting to IDYES (update in place) as documented.
+      Result := SuppressibleMsgBox('This folder already exists and is not empty:' + #13#10 + Destination + #13#10#13#10 +
+        'Update/overwrite the existing installation in this folder?', mbConfirmation, MB_YESNO, IDYES) = IDYES;
     end;
   end;
 end;

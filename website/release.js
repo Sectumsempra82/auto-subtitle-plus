@@ -12,11 +12,10 @@
     const releases = await response.json();
     if (!Array.isArray(releases)) return;
     const assetFor = (release, edition) => {
+      // One EXE now serves Windows/GUI/CLI alike: it asks Install or Portable when run.
       const names = edition === "macOS"
         ? ["AutoSubtitlePlus-GUI-macOS-arm64.pkg", "AutoSubtitlePlus-GUI-macOS-arm64.zip"]
-        : edition === "Windows"
-        ? ["AutoSubtitlePlus-Setup-Windows-x64.exe", "AutoSubtitlePlus-GUI-Windows-x64.zip"]
-        : [`AutoSubtitlePlus-${edition}-Windows-x64.zip`];
+        : ["AutoSubtitlePlus-Windows-x64.exe", "AutoSubtitlePlus-Setup-Windows-x64.exe", "AutoSubtitlePlus-GUI-Windows-x64.zip"];
       for (const name of names) {
         const asset = release.assets?.find(item => item.name === name &&
           item.browser_download_url?.startsWith(`https://github.com/${repository}/releases/download/`));
@@ -25,9 +24,7 @@
     };
     const published = releases.filter(item => !item.draft)
       .sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
-    const windows = published.find(item =>
-      assetFor(item, "Windows")?.name === "AutoSubtitlePlus-Setup-Windows-x64.exe" ||
-      (assetFor(item, "GUI") && assetFor(item, "CLI")));
+    const windows = published.find(item => assetFor(item, "Windows"));
     const macOS = published.find(item => assetFor(item, "macOS"));
     const releaseFor = platform => platform === "macOS" ? macOS : windows;
     document.querySelectorAll("[data-download]").forEach(link => {

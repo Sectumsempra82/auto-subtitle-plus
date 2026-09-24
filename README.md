@@ -8,9 +8,8 @@ Auto Subtitle Plus generates subtitles and editable text transcripts from video 
 
 Latest compiled builds:
 
-- [Windows x64 CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-CLI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-CLI-Windows-x64.zip.sha256)
-- [Windows x64 GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-Windows-x64.zip) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.8/AutoSubtitlePlus-GUI-Windows-x64.zip.sha256)
-- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.9/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
+- [Windows x64 EXE](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-Windows-x64.exe) · [SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-Windows-x64.exe.sha256) — one EXE for CLI and GUI; asks Install or Portable, then a folder, when run
+- [Apple Silicon macOS PKG](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-GUI-macOS-arm64.pkg)
 
 [Latest tagged release](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest) · [All release assets and checksums](https://github.com/Sectumsempra82/auto-subtitle-plus/releases) · [Latest continuous Windows build](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/continuous)
 
@@ -43,36 +42,59 @@ formats, or `--output-dir` to choose a folder. When translating, TXT contains th
 final translated text; add `--save-original` to keep the source-language TXT too.
 See the [transcription guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#transcription).
 
-## Windows installer and updates
+## Windows setup and updates
 
-[Download the Windows installer](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-Setup-Windows-x64.exe) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5)
+[Download the Windows EXE](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-Windows-x64.exe) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest)
 
-**v0.3.0-rc.5** installs the desktop and CLI together for your Windows account,
-without administrator rights. The default folder is
-`%LOCALAPPDATA%\Programs\Auto Subtitle Plus`. Portable GUI and CLI ZIPs remain available.
+One EXE installs the desktop and CLI together. Running it asks **Install**
+(Start Menu shortcut, uninstaller) or **Portable** (copies the application
+files only — nothing else on this computer changes), then a destination
+folder, defaulting to `%ProgramFiles%\Auto Subtitle Plus` either way; browse
+to pick anywhere else, such as a USB drive, for a portable copy. Because
+Program Files is the default, Setup always asks for one UAC elevation, even
+for Portable. If the folder you pick already has files, Setup asks whether
+to update/overwrite it in place.
 
-To update, finish jobs, close both editions and run the newer installer; do not
-uninstall first. Setup reuses the installation folder, replaces application code
-and removes obsolete Python modules. Settings, queue, models, caches and prepared
-runtimes in `data` are preserved. Same-version reinstall is supported; downgrades
-are blocked. Uninstall also leaves user data and exports intact.
+To update, finish jobs, close both editions and run the newer EXE onto the
+same folder; do not uninstall first. Setup reuses the folder, replaces
+application code and removes obsolete Python modules. Settings, queue,
+models, caches and prepared runtimes in `data` are preserved. Same-version
+reinstall is supported; downgrades are blocked. Uninstalling an Install-mode
+setup also leaves user data and exports intact; a Portable copy has no
+uninstaller, so remove it by deleting its folder.
 
-**Upgrading from a portable ZIP:** choose its existing extracted application
-folder in Setup. Its adjacent `data` folder remains in place. Other copies are
-not moved or deleted. `AUTO_SUBTITLE_PLUS_DATA_DIR` overrides remain supported.
+**Upgrading an existing copy from an earlier release** (Install or Portable):
+choose its existing application folder when Setup asks for a destination. Its
+adjacent `data` folder remains in place. Other copies elsewhere are not moved
+or deleted. `AUTO_SUBTITLE_PLUS_DATA_DIR` overrides remain supported.
 
 First launch prepares verified app-local dependencies; models download separately.
-CPU remains the default and CUDA is opt-in. Updates are manual. The installer is
+CPU remains the default and CUDA is opt-in. Updates are manual. The EXE is
 unsigned; verify the checksum and source before running it. See the
 [Windows update guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#windows-updates).
-Rebuild the installer and both ZIPs with `Build Installer.cmd`;
-[build details](packaging/README.md) include compiler acquisition and validation.
+Rebuild it with `Build Windows.cmd`; [build details](packaging/README.md)
+include compiler acquisition and validation.
+
+## Windows desktop
+
+The Windows GUI shows the same workspace as the Mac app: Queue, Speech,
+Translate, History/output review, Settings and Help in the sidebar, with the
+Queue screen holding file management, drag-and-drop, queue controls and live
+resource meters. Settings keeps the Layout, Files and System options, and every
+processing option, saved value and validation rule is unchanged — the workspace
+only presents the existing controls. Press Ctrl+K to search settings by name.
+
+Windows-specific capabilities stay Windows-specific: CUDA devices, the faster
+backend's compute types and the Hy-MT2 translation models remain available here
+and are rejected on Mac.
+
+![Windows desktop workspace with example media, queue controls, drag-and-drop area, and live resource meters](assets/screenshots/desktop-windows.png)
 
 ## macOS desktop
 
-[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.9/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.9) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
+[Download for Apple Silicon](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-GUI-macOS-arm64.pkg) · [Release notes and SHA-256](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.10) · [Mac setup guide](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#macos)
 
-**v0.3.0-rc.9** brings the redesigned, Mac-only workspace to the Apple Silicon desktop app. Queue, Speech, Translate, History/output review, Settings and Help each have a clear place in the sidebar. The Queue screen brings file management, drag-and-drop, queue controls and live resource meters together; Speech and Translate use focused forms; History shows processing status and lets you review generated transcript, translation and subtitle outputs. Settings keeps the Layout, Files and System options available in the existing desktop, with the same processing behavior and saved values. The Windows GUI keeps its existing interface.
+**v0.3.0-rc.10** brought the redesigned workspace to the Apple Silicon desktop app, and the Windows desktop now shows the same workspace. Queue, Speech, Translate, History/output review, Settings and Help each have a clear place in the sidebar. The Queue screen brings file management, drag-and-drop, queue controls and live resource meters together; Speech and Translate use focused forms; History shows processing status and lets you review generated transcript, translation and subtitle outputs. Settings keeps the Layout, Files and System options available in the existing desktop, with the same processing behavior and saved values. See [Windows desktop](#windows-desktop) for the Windows notes.
 
 The app is a native macOS `.app` with Python and processing libraries bundled, plus a **PKG installer** that installs or replaces it in Applications. A ZIP is also available. Install **FFmpeg** separately (`brew install ffmpeg` for Homebrew users). Requires Apple Silicon and macOS 26+; this build was tested on macOS 27.0. Intel Macs and older macOS versions have not been validated.
 
@@ -99,9 +121,9 @@ The workspace follows the mockup's light appearance, Finder can open media in th
 
 Actual desktop UI with example queue filenames.
 
-![Local-file queue and transcription settings](assets/screenshots/desktop-queue.png)
+![Local-file queue, queue controls and live resource meters](assets/screenshots/desktop-windows.png)
 
-![Local translation model, language and route settings](assets/screenshots/desktop-translation.png)
+![Redesigned macOS queue with example media, queue controls, drag-and-drop area, and live resource meters](assets/screenshots/desktop-macos.png)
 
 Both frontends use the same processing library. The CLI has no Qt dependency;
 the optional desktop frontend adds a single-window local-file queue, settings,
@@ -199,43 +221,48 @@ All existing fork, model, and runtime credits below continue to apply to both
 frontends. Portable builds include dependency notices and matching application
 source; public redistribution additionally requires the licensing checks below.
 
-### Portable Windows Editions
+### Windows x64 Edition
 
 Download the current **Windows x64 release candidate** from
-[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/tag/v0.3.0-rc.5):
+[GitHub Releases](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest):
 
-- [CLI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-CLI-Windows-x64.zip)
-- [GUI ZIP](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/download/v0.3.0-rc.5/AutoSubtitlePlus-GUI-Windows-x64.zip)
+- [AutoSubtitlePlus-Windows-x64.exe](https://github.com/Sectumsempra82/auto-subtitle-plus/releases/latest/download/AutoSubtitlePlus-Windows-x64.exe)
 
-Each archive is under 2 MiB, not an all-dependencies bundle. Initial
+One EXE under 4 MiB, not an all-dependencies bundle; it asks Install or
+Portable, then a destination folder, when run (see
+[Windows setup and updates](#windows-setup-and-updates) above). Initial
 CLI CPU dependency archives total approximately 472 MiB; prepared runtime files
 occupy approximately 1.91 GiB, plus retained download archives and model weights.
-GUI and optional GPU dependencies add to those totals. The builds are unsigned.
+GUI and optional GPU dependencies add to those totals. The build is unsigned.
 CPU setup, offline transcription/translation and GUI queue execution were tested
 on the development machine. Clean-Windows and the new CUDA-bootstrap path remain
 unverified; this release is explicitly a pre-release, not a certified installer.
 
-`Build Portable.cmd` rebuilds both small Windows x64 launcher editions from the
-current code, runs regression tests, and creates ZIPs with checksums under
-`dist/windows-light`. No installed Python is needed on the destination.
+`Build Windows.cmd` rebuilds the EXE from the current code, runs regression
+tests, and creates it with a checksum under `dist/windows-light`. No installed
+Python is needed on the destination.
 See [build commands, prerequisites, validation and licensing](packaging/README.md).
 
-Extract the whole ZIP and launch the CLI or GUI executable. First run downloads
-pinned, checksum-verified Python, FFmpeg and library packages into app-local
-storage. CPU is the initial runtime profile; `Setup CUDA.cmd` explicitly adds
-GPU dependencies. CLI setup excludes Qt. llama.cpp and models are acquired
-automatically when selected. An NVIDIA graphics driver is still required for CUDA.
-Portable models and settings live in `data` beside the EXE; preserve it on upgrade.
+Run the EXE and launch the CLI or GUI executable it places in your chosen
+folder. First run downloads pinned, checksum-verified Python, FFmpeg and
+library packages into app-local storage. CPU is the initial runtime profile;
+`Setup CUDA.cmd` explicitly adds GPU dependencies. CLI setup excludes Qt.
+llama.cpp and models are acquired automatically when selected. An NVIDIA
+graphics driver is still required for CUDA. Models and settings live in
+`data` beside the executables; preserve it on upgrade.
 `AUTO_SUBTITLE_PLUS_DATA_DIR` selects a shared writable data folder for both editions.
-No administrator rights, runtime pip/compiler, global Python or PATH changes are
-needed. System-wide installation is never automatic and requires separate explicit
-approval. `Check Dependencies.cmd` verifies installed files; `Repair Dependencies.cmd`
+No runtime pip/compiler, global Python or PATH changes are needed; the EXE
+itself requests one Windows administrator elevation because Program Files is
+the default destination folder (Portable mode still only copies files into
+the folder you choose). System-wide installation is never automatic beyond
+that and requires separate explicit approval for anything further.
+`Check Dependencies.cmd` verifies installed files; `Repair Dependencies.cmd`
 rebuilds them. See the packaged `README.txt` and [packaging guide](packaging/README.md).
 The launcher uses a pinned, isolated Python runtime owned by the application; it
 does not install or replace system Python. Run `auto_subtitle_plus --diagnose` to
-see the effective runtime, model and cache paths. See the wiki pages for the
-[Windows runtime and Python](https://github.com/Sectumsempra82/auto-subtitle-plus/wiki/Windows-runtime-and-Python)
-and [models, caches, and offline use](https://github.com/Sectumsempra82/auto-subtitle-plus/wiki/Models-caches-and-offline-use).
+see the effective runtime, model and cache paths. See the user guide for
+[CPU, CUDA and working offline](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#hardware)
+and [data, repair and upgrades](https://sectumsempra82.github.io/auto-subtitle-plus/guide/#data).
 The small launchers use inbox Windows PowerShell/.NET Framework. Wheel preparation
 uses [PyPA installer](https://github.com/pypa/installer) (MIT). Only Whisper and
 Stable-TS, which lack compatible published wheels, are prebuilt and bundled.

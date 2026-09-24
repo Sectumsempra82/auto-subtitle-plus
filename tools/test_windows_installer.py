@@ -16,8 +16,10 @@ APP_KEY = r'Software\Microsoft\Windows\CurrentVersion\Uninstall\local.autosubtit
 
 
 def registered_folder() -> str | None:
+    # The installer always runs elevated (Program Files is the default destination),
+    # so Setup Type: Install registers under HKLM, not HKCU.
     try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, APP_KEY, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
+        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, APP_KEY, access=winreg.KEY_READ | winreg.KEY_WOW64_64KEY) as key:
             return winreg.QueryValueEx(key, 'InstallLocation')[0]
     except FileNotFoundError:
         return None
@@ -34,7 +36,7 @@ def run(installer: Path, log: Path, folder: Path | None = None, succeeds: bool =
 
 def verify_payload(folder: Path) -> None:
     manifest = json.loads((folder / 'manifest.json').read_text())
-    assert manifest['edition'] == 'GUI+CLI'
+    assert manifest['edition'] == 'Unified'
     for item in manifest['files']:
         path = folder / item['path']
         assert path.stat().st_size == item['size'], path

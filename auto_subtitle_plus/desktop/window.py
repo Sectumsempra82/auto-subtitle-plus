@@ -821,6 +821,9 @@ QPushButton#primary:hover { background: #116a6d; }
 QPushButton#primary:disabled { background: #cad6d8; border-color: #cad6d8; color: #738388; }
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox, QPlainTextEdit, QListWidget { background: white; border: 1px solid #cbd4d9; border-radius: 3px; padding: 4px; min-height: 20px; }
 QComboBox:disabled, QSpinBox:disabled, QLineEdit:disabled { background: #eef1f3; color: #88959c; }
+QComboBox QAbstractItemView { background: white; color: #263239; border: 1px solid #cbd4d9; padding: 2px; outline: 0; selection-background-color: #dceff0; selection-color: #173b43; }
+QComboBox QAbstractItemView::item { background: white; color: #263239; border: 0; padding: 4px; min-height: 20px; }
+QComboBox QAbstractItemView::item:selected, QComboBox QAbstractItemView::item:hover { background: #dceff0; color: #173b43; }
 QCheckBox { spacing: 7px; min-height: 22px; }
 QTableView { background: white; alternate-background-color: #f8fafb; border: 1px solid #d6dfe3; selection-background-color: #dceff0; selection-color: #173b43; }
 QHeaderView::section { background: #eef2f4; color: #5b6a73; border: none; border-bottom: 1px solid #d6dfe3; padding: 8px 5px; text-align: left; }

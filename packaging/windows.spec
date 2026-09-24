@@ -32,6 +32,8 @@ for distribution, relative in (("nvidia-cublas-cu12", "nvidia/cublas/bin"),
 
 hidden = ["gui_smoke", "auto_subtitle_plus.api", "auto_subtitle_plus.processing", "auto_subtitle_plus.transcription_worker",
           "auto_subtitle_plus.translation_worker", "tiktoken_ext.openai_public"]
+# The desktop package resolves its shell at runtime; name the Windows one.
+hidden += collect_submodules("auto_subtitle_plus.desktop.workspace")
 for package in ("whisper", "stable_whisper", "faster_whisper", "ctranslate2"):
     hidden += collect_submodules(package)
 model_packages = {"auto", "m2m_100", "nllb", "nllb_moe", "marian", "t5", "mt5"}

@@ -1,40 +1,61 @@
-# Lightweight Windows Editions
+# Lightweight Windows Edition
 
-The default delivery is now a small native launcher and application payload,
-not the superseded 8.6 GiB PyInstaller bundle. Dependencies come from pinned
-public upstream archives; preparation is app-local and needs no administrator.
-Distribution size and installed runtime size are different: CUDA still uses
-several GiB when explicitly selected. Models remain separate.
+Windows ships as a single native EXE, not the superseded 8.6 GiB PyInstaller
+bundle and not two separate portable/installer downloads. Dependencies come
+from pinned public upstream archives; preparation is app-local and needs no
+administrator. Distribution size and installed runtime size are different:
+CUDA still uses several GiB when explicitly selected. Models remain separate.
 
-## Windows installer
+## The single EXE
 
-`Build Installer.cmd` runs the regression suite, compiles both portable editions,
-and builds `AutoSubtitlePlus-Setup-Windows-x64.exe` plus its SHA256. Equivalent:
+Running `AutoSubtitlePlus-Windows-x64.exe` asks:
+
+1. **Install** (Start Menu shortcut, optional desktop shortcut, uninstaller)
+   or **Portable** (copy the application files only — nothing else on the
+   computer changes, e.g. for a USB drive or a folder you manage yourself).
+2. A destination folder, defaulting to `%ProgramFiles%\Auto Subtitle Plus`
+   for either choice; browse to pick anywhere else (portable users typically
+   pick a removable drive or a plain local folder instead).
+3. If that folder already has content, whether to update/overwrite it in
+   place.
+
+That's it — there is no separate "installer" download and no separate "ZIP"
+download. Because the default destination is Program Files, Setup always
+requests administrator elevation (one UAC prompt), even for Portable, which
+only ever copies files into the folder you chose.
+
+`Build Windows.cmd` runs the regression suite, builds both launcher payloads
+and compiles the single EXE plus its SHA256. Equivalent:
 
 ```powershell
-.\packaging\Build-Portable.ps1 -Installer -Output dist/windows-rc5
+.\packaging\Build-Windows.ps1 -Output dist/windows-rc10
 ```
 
 Inno Setup 6.7.3 is prepared in portable mode under `.build/installer-tools` from
 the official release. Its pinned SHA256 and publisher signature are checked
 before extraction. No system-wide compiler installation is required. Pass
-`-InstallerCompiler C:\path\ISCC.exe` to use an existing compiler.
+`-InstallerCompiler C:\path\ISCC.exe` to use an existing compiler. Pass
+`-PayloadOnly` to stop after building the two internal CLI/GUI launcher
+folders (for local inspection) without compiling the EXE, or `-KeepPayload`
+to keep those folders alongside the compiled EXE instead of deleting them.
 
-The installer has a stable AppId, per-user registration, remembered destination,
+Install mode has a stable AppId, registration, remembered destination,
 version guards and running-application guards. Only `app/auto_subtitle_plus` is
 removed before copying the new code, so obsolete modules and bytecode cannot
 survive updates. `data` and exported files are never installer-owned. Existing
-ZIP users select their application folder; other portable copies are untouched.
-Application-code junctions/symlinks and unrelated nonempty destinations are rejected.
+copies (portable or installed) select their existing application folder; other
+copies are untouched. Application-code junctions/symlinks and unrelated
+nonempty destinations are rejected regardless of Install/Portable choice.
 
 Actual upgrade validation uses disposable folders and refuses to run when a daily
 installer installation is registered. It tests portable migration, upgrades to the
 registered folder, reinstall, downgrade rejection, running-app rejection, stale
 module cleanup, user-data preservation and uninstall. A separately compiled older
 fixture installer is required; do not substitute a production user installation.
+It must run elevated, since Install mode always registers under `HKEY_LOCAL_MACHINE`.
 
 ```powershell
-python tools/test_windows_installer.py --installer dist/windows-rc5/AutoSubtitlePlus-Setup-Windows-x64.exe --older-installer path/to/older-fixture.exe --portable path/to/old-portable-folder --output .build/installer-validation
+python tools/test_windows_installer.py --installer dist/windows-rc10/AutoSubtitlePlus-Windows-x64.exe --older-installer path/to/older-fixture.exe --portable path/to/old-portable-folder --output .build/installer-validation
 ```
 
 The wrapper supplies Windows fonts to Qt offscreen tests through `QT_QPA_FONTDIR`.
@@ -43,21 +64,22 @@ box glyphs and produce false layout failures.
 
 ## Rebuild Updated Code
 
-Double-click `Build Portable.cmd`, or run from the repository root:
+Double-click `Build Windows.cmd`, or run from the repository root:
 
 ```powershell
-.\packaging\Build-Portable.ps1
-.\packaging\Build-Portable.ps1 -PythonExe C:\path\to\python.exe -Output C:\builds\new-version
+.\packaging\Build-Windows.ps1
+.\packaging\Build-Windows.ps1 -PythonExe C:\path\to\python.exe -Output C:\builds\new-version
 ```
 
 Use the tested Python 3.13 application development environment for the full
 regression suite. Building launchers uses the Windows .NET Framework C# compiler;
 it does not need PyInstaller, CUDA SDK, FFmpeg or model downloads. The checked-in
 catalog and two vendor wheels are reused, so ordinary code rebuilds do not
-resolve new dependency versions. `-SkipTests` is a development-only bypass;
-`-NoZip` omits compression. Output is `dist/windows-light` with CLI/GUI folders,
-ZIPs, per-file manifests and ZIP SHA256 files. A folder containing user `data`
-is never overwritten by a rebuild; choose a different output directory.
+resolve new dependency versions. `-SkipTests` is a development-only bypass.
+Output is `dist/windows-light` containing only `AutoSubtitlePlus-Windows-x64.exe`
+and its SHA256 (the two internal CLI/GUI launcher folders used to build it are
+removed unless `-KeepPayload` is passed). A folder containing user `data` is
+never overwritten by a rebuild; choose a different output directory.
 
 ## Update Dependency Pins
 
@@ -124,8 +146,12 @@ prepared CPU runtime files approximately 1.91 GiB, excluding models and retained
 archives. GPU bootstrap acquisition and clean-Windows VM validation remain pending;
 earlier full-bundle GPU tests are not a substitute for those new-package gates.
 
+These launcher smoke commands target the internal CLI payload folder, so build
+with `-KeepPayload` (or `-PayloadOnly`) first:
+
 ```powershell
 python -m unittest discover -s tests -q
+.\packaging\Build-Windows.ps1 -SkipTests -KeepPayload
 .\dist\windows-light\AutoSubtitlePlus-CLI\auto_subtitle_plus.exe --setup-only
 .\dist\windows-light\AutoSubtitlePlus-CLI\auto_subtitle_plus.exe --check-dependencies
 .\dist\windows-light\AutoSubtitlePlus-CLI\auto_subtitle_plus.exe --offline --help
@@ -145,4 +171,4 @@ superseded full-bundle validation path; the rebuild shortcut no longer calls the
 
 ## macOS Apple Silicon
 
-The Mac desktop uses a bundled `.app`, independently of the Windows bootstrap ZIPs. Release `v0.3.0-rc.9` adds a redesigned Mac-only GUI while leaving the Windows GUI unchanged. See [Mac packaging and validation](macos.md) and [release notes](RELEASE-v0.3.0-rc.9.md). FFmpeg remains a separate prerequisite.
+The Mac desktop uses a bundled `.app`, independently of the Windows bootstrap ZIPs. Release `v0.3.0-rc.9` added the redesigned GUI on Mac; the Windows GUI now shows the same workspace. See [Mac packaging and validation](macos.md) and [release notes](RELEASE-v0.3.0-rc.9.md). FFmpeg remains a separate prerequisite.

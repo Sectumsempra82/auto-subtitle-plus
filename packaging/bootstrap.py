@@ -229,8 +229,10 @@ def prepare(root, data, manifest, edition, device, offline=False, repair=False):
         if edition == "GUI":
             check += "from PySide6 import QtCore, QtWidgets; "
         check += "print('Runtime imports verified')"
-        subprocess.run([str(stage / "python/python.exe"), "-I", "-c", check], check=True,
-                       env=environment(data, stage))
+        # Third-party docstrings with invalid escapes warn on first compile; a
+        # real problem still raises SyntaxError and fails this check.
+        subprocess.run([str(stage / "python/python.exe"), "-I", "-W", "ignore::SyntaxWarning", "-c", check],
+                       check=True, env=environment(data, stage))
         subprocess.run([str(stage / "ffmpeg/bin/ffmpeg.exe"), "-version"], check=True,
                        stdout=subprocess.DEVNULL, env=environment(data, stage))
         print("Recording installed-file integrity checksums...", flush=True)

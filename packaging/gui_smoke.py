@@ -34,10 +34,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Frozen GUI portable smoke check.")
-    parser.add_argument("--smoke-test", action="store_true", help="Launch the real MainWindow, capture a smoke report, and exit")
-    parser.add_argument("--smoke-run", action="store_true", help="Start the real MainWindow queue and wait for the smoke media job")
+    parser.add_argument("--smoke-test", action="store_true", help="Launch the real desktop window, capture a smoke report, and exit")
+    parser.add_argument("--smoke-run", action="store_true", help="Start the real desktop window queue and wait for the smoke media job")
     parser.add_argument("--portable-smoke", default=None, help="Write GUI smoke JSON report here and exit")
-    parser.add_argument("--smoke-media", default=None, help="Optional media file to enqueue in the real MainWindow")
+    parser.add_argument("--smoke-media", default=None, help="Optional media file to enqueue in the real desktop window")
     parser.add_argument("--smoke-output-dir", default=None, help="Output directory to validate in GUI settings")
     parser.add_argument("--smoke-asr-model", default=None, help="ASR model name or absolute local snapshot path for GUI settings validation")
     parser.add_argument("--smoke-backend", choices=("stable", "faster"), default="faster")
@@ -61,17 +61,18 @@ def run_qt_smoke(args: argparse.Namespace, report_path: Path, report: dict[str, 
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
+    from auto_subtitle_plus.desktop import theme_application, window_class
     from auto_subtitle_plus.desktop.state import StateStore
-    from auto_subtitle_plus.desktop.window import MainWindow, apply_theme
 
     app = QApplication.instance() or QApplication([sys.argv[0], "--portable-smoke"])
     app.setApplicationName("Auto Subtitle Plus")
     app.setOrganizationName("AutoSubtitlePlus")
-    apply_theme(app)
+    theme_application(app)
 
     state_path = report_path.parent / "gui-state" / "state.json"
     store = StateStore(state_path)
-    window = MainWindow(store=store, monitor=False)
+    # Check the window this platform actually ships, not the classic one.
+    window = window_class()(store=store, monitor=False)
     report["checks"].append({"name": "construct-main-window", "status": "passed"})
 
     media_added = 0

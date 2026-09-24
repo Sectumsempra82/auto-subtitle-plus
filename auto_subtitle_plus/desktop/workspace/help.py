@@ -1,4 +1,4 @@
-"""Offline guidance and the online user guide for the macOS desktop."""
+"""Offline guidance and the online user guide for the desktop workspace."""
 from PySide6.QtCore import Qt, QUrl
 from PySide6.QtGui import QDesktopServices
 from PySide6.QtWidgets import QLabel, QPushButton, QTextBrowser, QVBoxLayout, QWidget

@@ -13,6 +13,8 @@ import subprocess
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+# Dependencies the app prepares next to itself on first run.
+PREPARED = "data"
 
 
 def digest(path):
@@ -43,12 +45,15 @@ def main():
     for edition in ("CLI", "GUI"):
         folder = output / f"AutoSubtitlePlus-{edition}"
         if folder.exists():
-            if (folder / "data").exists():
-                raise ValueError(f"Refusing to rebuild a used portable folder: {folder}. Choose another --output")
             if not folder.resolve().is_relative_to(output):
                 raise ValueError("Output resolves outside build directory")
-            shutil.rmtree(folder)
-        folder.mkdir()
+            # Replace the payload but keep any prepared dependencies: the app
+            # revalidates them against this catalog on its next start.
+            for item in folder.iterdir():
+                if item.name == PREPARED:
+                    continue
+                shutil.rmtree(item) if item.is_dir() and not item.is_symlink() else item.unlink()
+        folder.mkdir(exist_ok=True)
         shutil.copytree(ROOT / "auto_subtitle_plus", folder / "app/auto_subtitle_plus",
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         for name in ("bootstrap.py", "app_entry.py", "Start-Application.ps1", "dependencies-windows.json", "gui_smoke.py"):
@@ -81,16 +86,18 @@ def main():
         for name, flags in {"Setup CPU.cmd": "--runtime-device cpu --setup-only", "Setup CUDA.cmd": "--runtime-device cuda --setup-only",
                             "Check Dependencies.cmd": "--check-dependencies", "Repair Dependencies.cmd": "--repair-dependencies --setup-only"}.items():
             (folder / name).write_text(f'@echo off\r\n"%~dp0{executable.name}" {flags} %*\r\npause\r\n', encoding="ascii")
+        payload = [path for path in sorted(folder.rglob("*"))
+                   if path.is_file() and path.relative_to(folder).parts[0] != PREPARED]
         files = [{"path": path.relative_to(folder).as_posix(), "size": path.stat().st_size, "sha256": digest(path)}
-                 for path in sorted(folder.rglob("*")) if path.is_file()]
+                 for path in payload]
         (folder / "manifest.json").write_text(json.dumps({"version": version, "edition": edition, "files": files}, indent=2))
         print(f"{edition} payload: {sum(item['size'] for item in files) / 1048576:.2f} MiB", flush=True)
         if not args.no_zip:
             archive = output / f"AutoSubtitlePlus-{edition}-Windows-x64.zip"
             with zipfile.ZipFile(archive, "w", zipfile.ZIP_DEFLATED, compresslevel=6) as stream:
-                for path in sorted(folder.rglob("*")):
-                    if path.is_file():
-                        stream.write(path, path.relative_to(output))
+                for path in payload:
+                    stream.write(path, path.relative_to(output))
+                stream.write(folder / "manifest.json", (folder / "manifest.json").relative_to(output))
             archive.with_suffix(".zip.sha256").write_text(digest(archive) + "  " + archive.name + "\n")
             print(f"Archive: {archive} ({archive.stat().st_size / 1048576:.2f} MiB)", flush=True)
 

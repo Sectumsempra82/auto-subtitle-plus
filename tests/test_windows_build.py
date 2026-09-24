@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 import zipfile
 
-from tools import build_windows
+from tools import build_bootstrap, build_windows
 
 
 class WindowsBuildTests(unittest.TestCase):
@@ -15,8 +17,8 @@ class WindowsBuildTests(unittest.TestCase):
             build_windows.source_archive(path)
             with zipfile.ZipFile(path) as archive:
                 names = archive.namelist()
-        self.assertIn("Build Portable.cmd", names)
-        self.assertIn("packaging/Build-Portable.ps1", names)
+        self.assertIn("Build Windows.cmd", names)
+        self.assertIn("packaging/Build-Windows.ps1", names)
         self.assertIn("packaging/windows.spec", names)
         self.assertIn("auto_subtitle_plus/translation_catalog.json", names)
         self.assertFalse(any(name.startswith(("docs/", ".git/", "dist/")) for name in names))
@@ -53,6 +55,57 @@ class WindowsBuildTests(unittest.TestCase):
             entry = next(item for item in manifest["files"] if item["path"].endswith(".pt"))
             self.assertEqual(len(entry["sha256"]), 64)
             self.assertTrue((output / "AutoSubtitlePlus-GUI-Windows-x64.zip.sha256").exists())
+
+
+class PortableRebuildTests(unittest.TestCase):
+    """The builder replaces a used portable folder without touching its deps."""
+
+    @staticmethod
+    def _build(output, zip_editions=False):
+        def compile_launcher(command, **kwargs):
+            target = next(part for part in command if part.startswith("/out:"))
+            Path(target[len("/out:"):]).write_bytes(b"MZ stub launcher")
+            return subprocess.CompletedProcess(command, 0)
+
+        argv = ["build_bootstrap.py", "--output", str(output)] + ([] if zip_editions else ["--no-zip"])
+        with patch.object(build_bootstrap.subprocess, "run", compile_launcher), patch.object(sys, "argv", argv):
+            build_bootstrap.main()
+
+    def test_rebuild_reuses_the_folder_keeping_prepared_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            self._build(output)
+
+            prepared = output / "AutoSubtitlePlus-GUI/data/runtimes/abc/python/python.exe"
+            prepared.parent.mkdir(parents=True)
+            prepared.write_bytes(b"a prepared runtime")
+            stale = output / "AutoSubtitlePlus-GUI/app/auto_subtitle_plus/removed_module.py"
+            stale.write_text("dropped in a later release")
+
+            self._build(output)
+
+            self.assertEqual(prepared.read_bytes(), b"a prepared runtime")
+            self.assertFalse(stale.exists())
+            manifest = json.loads((output / "AutoSubtitlePlus-GUI/manifest.json").read_text())
+            paths = [item["path"] for item in manifest["files"]]
+            self.assertFalse(any(path.startswith("data/") for path in paths))
+            self.assertIn("app/auto_subtitle_plus/__init__.py", paths)
+
+    def test_archive_ships_the_payload_without_the_prepared_dependencies(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp)
+            self._build(output)
+            prepared = output / "AutoSubtitlePlus-CLI/data/downloads/python.zip"
+            prepared.parent.mkdir(parents=True)
+            prepared.write_bytes(b"a cached download")
+
+            self._build(output, zip_editions=True)
+
+            with zipfile.ZipFile(output / "AutoSubtitlePlus-CLI-Windows-x64.zip") as archive:
+                names = archive.namelist()
+            self.assertTrue(prepared.is_file())
+            self.assertFalse(any("/data/" in name for name in names), [n for n in names if "/data/" in n])
+            self.assertIn("AutoSubtitlePlus-CLI/manifest.json", names)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,11 @@
-"""Package the verified lightweight GUI and CLI payloads as a per-user installer."""
+"""Package the verified lightweight GUI and CLI payloads as the single Windows EXE.
+
+The compiled EXE is the only Windows distribution artifact: running it asks the
+user to choose Install (Start Menu shortcuts, uninstaller) or Portable (copy
+files only), then a destination folder (Program Files by default), and offers
+to update/overwrite if that folder already has content. See
+packaging/windows-installer.iss.
+"""
 from __future__ import annotations
 
 import argparse
@@ -47,7 +54,7 @@ def build_installer(output: Path, compiler: Path) -> Path:
         shutil.copytree(gui, payload)
         shutil.copy2(cli / 'auto_subtitle_plus.exe', payload)
         shutil.copy2(ROOT / 'packaging/WINDOWS-INSTALLER.txt', payload)
-        manifest['edition'] = 'GUI+CLI'
+        manifest['edition'] = 'Unified'
         manifest['files'] = [
             {'path': path.relative_to(payload).as_posix(), 'size': path.stat().st_size, 'sha256': digest(path)}
             for path in sorted(payload.rglob('*')) if path.is_file() and path.name != 'manifest.json'
@@ -57,7 +64,7 @@ def build_installer(output: Path, compiler: Path) -> Path:
             str(compiler), '/Qp', '/DAppVersion=' + version, '/DFileVersion=' + file_version,
             '/DPayloadDir=' + str(payload), '/O' + str(output), str(ROOT / 'packaging/windows-installer.iss'),
         ], check=True)
-    installer = output / 'AutoSubtitlePlus-Setup-Windows-x64.exe'
+    installer = output / 'AutoSubtitlePlus-Windows-x64.exe'
     installer.with_suffix('.exe.sha256').write_text(digest(installer) + '  ' + installer.name + '\n', encoding='ascii')
     return installer
 

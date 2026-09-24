@@ -1,4 +1,4 @@
-"""Queue page layout for the Mac workspace, reusing MainWindow controls."""
+"""Queue page layout for the desktop workspace, reusing MainWindow controls."""
 from __future__ import annotations
 
 from PySide6.QtCore import QSize, Qt
@@ -15,8 +15,8 @@ from PySide6.QtWidgets import (
 from .icons import action_icon, nav_icon
 
 
-class MacQueueView(QWidget):
-    """Arrange the existing queue widgets to match the Mac Queue mockup.
+class WorkspaceQueueView(QWidget):
+    """Arrange the existing queue widgets to match the Queue mockup.
 
     The queue panel's model, table, and action buttons are kept intact. This
     class changes their layout only; MainWindow remains responsible for queue
@@ -26,7 +26,7 @@ class MacQueueView(QWidget):
     def __init__(self, window, queue_panel: QWidget, resources: QWidget, summary: QLabel) -> None:
         super().__init__()
         self.window = window
-        self.setObjectName("macQueuePage")
+        self.setObjectName("workspaceQueuePage")
 
         # Keep the queue stack itself so MainWindow.update_controls() can keep
         # using it. Its empty-state page becomes the same table, which leaves
@@ -38,7 +38,7 @@ class MacQueueView(QWidget):
         root.setSpacing(10)
 
         heading = QWidget()
-        heading.setObjectName("macQueueHeader")
+        heading.setObjectName("workspaceQueueHeader")
         heading_layout = QHBoxLayout(heading)
         heading_layout.setContentsMargins(2, 0, 2, 0)
         heading_layout.setSpacing(8)
@@ -52,16 +52,16 @@ class MacQueueView(QWidget):
         title_block.addWidget(subtitle)
         heading_layout.addLayout(title_block)
         heading_layout.addStretch(1)
-        summary.setObjectName("macQueueSummary")
+        summary.setObjectName("workspaceQueueSummary")
         heading_layout.addWidget(summary, alignment=Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         root.addWidget(heading)
 
         toolbar = QWidget()
-        toolbar.setObjectName("macQueueToolbar")
+        toolbar.setObjectName("workspaceQueueToolbar")
         toolbar_layout = QHBoxLayout(toolbar)
         toolbar_layout.setContentsMargins(0, 0, 0, 0)
         toolbar_layout.setSpacing(7)
-        window.add_button.setObjectName("macToolbarButton")
+        window.add_button.setObjectName("workspaceToolbarButton")
         window.add_button.setIcon(action_icon("add", 16, "#ffffff"))
         window.add_button.setIconSize(QSize(16, 16))
         window.add_button.setMinimumHeight(32)
@@ -70,7 +70,7 @@ class MacQueueView(QWidget):
             window.folder_button,
         ):
             if button is window.folder_button:
-                button.setObjectName("macIconButton")
+                button.setObjectName("workspaceIconButton")
                 button.setIcon(action_icon("folder"))
                 button.setIconSize(QSize(16, 16))
                 button.setFixedSize(32, 32)
@@ -83,14 +83,14 @@ class MacQueueView(QWidget):
             window.remove_button,
             window.clear_button,
         ):
-            button.setObjectName("macIconButton")
+            button.setObjectName("workspaceIconButton")
             button.setIconSize(QSize(16, 16))
             button.setFixedSize(32, 32)
             toolbar_layout.addWidget(button)
         root.addWidget(toolbar)
 
         table_card = QFrame()
-        table_card.setObjectName("macCard")
+        table_card.setObjectName("workspaceCard")
         table_layout = QVBoxLayout(table_card)
         table_layout.setContentsMargins(0, 0, 0, 0)
         table_layout.addWidget(window.queue_stack)
@@ -99,7 +99,7 @@ class MacQueueView(QWidget):
         root.addWidget(table_card, 1)
 
         self.drop_zone = QPushButton("Drop media files here\nVideo or audio files · Supports mp4, mkv, mov, wav and more")
-        self.drop_zone.setObjectName("macDropZone")
+        self.drop_zone.setObjectName("workspaceDropZone")
         self.drop_zone.setToolTip("Add local audio or video. Drag files onto the window, or click to browse.")
         self.drop_zone.setMinimumHeight(68)
         self.drop_zone.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -116,7 +116,7 @@ class MacQueueView(QWidget):
         window.pause_button.setObjectName("secondary")
         window.pause_button.setIconSize(QSize(16, 16))
         window.pause_button.setMinimumHeight(34)
-        window.cancel_button.setObjectName("macIconButton")
+        window.cancel_button.setObjectName("workspaceIconButton")
         window.cancel_button.setIconSize(QSize(16, 16))
         window.cancel_button.setFixedSize(32, 32)
         controls_layout.addWidget(window.start_button)
