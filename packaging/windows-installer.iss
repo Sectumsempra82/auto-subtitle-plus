@@ -30,7 +30,6 @@ UsePreviousAppDir=yes
 DisableDirPage=no
 DisableProgramGroupPage=yes
 AllowNoIcons=yes
-AppMutex=AutoSubtitlePlus.Running
 SetupMutex=AutoSubtitlePlus.Setup
 CloseApplications=no
 RestartApplications=no
@@ -58,6 +57,8 @@ Type: filesandordirs; Name: "{app}\app\auto_subtitle_plus"
 Filename: "{app}\installation.ini"; Section: "Application"; Key: "Id"; String: "{#AppId}"; Flags: uninsdeleteentry
 Filename: "{app}\installation.ini"; Section: "Application"; Key: "Version"; String: "{#FileVersion}"; Flags: uninsdeleteentry
 Filename: "{app}\installation.ini"; Section: "Application"; Key: "Edition"; String: "{code:GetEditionName}"; Flags: uninsdeleteentry
+Filename: "{app}\installation.ini"; Section: "Application"; Key: "Runtime"; String: "{code:GetRuntimeSelection}"; Flags: uninsdeleteentry
+Filename: "{app}\installation.ini"; Section: "Application"; Key: "RuntimeRevision"; String: "{code:GetRuntimeRevision}"; Flags: uninsdeleteentry
 
 [UninstallDelete]
 Type: files; Name: "{app}\installation.ini"
@@ -70,6 +71,8 @@ Name: "{autodesktop}\Auto Subtitle Plus"; Filename: "{app}\auto_subtitle_plus_gu
 [Code]
 var
   EditionPage: TInputOptionWizardPage;
+  RuntimePage: TInputOptionWizardPage;
+  RuntimeRevision: String;
 
 function GetFileAttributes(Name: String): LongWord;
   external 'GetFileAttributesW@kernel32.dll stdcall';
@@ -91,6 +94,32 @@ begin
   EditionPage.Add('Install (recommended) - Start Menu shortcut and uninstaller');
   EditionPage.Add('Portable - copy the application files only');
   EditionPage.SelectedValueIndex := 0;
+  if ExpandConstant('{param:MODE|install}') = 'portable' then EditionPage.SelectedValueIndex := 1;
+  RuntimePage := CreateInputOptionPage(EditionPage.ID,
+    'Choose Processing Hardware', 'Which runtime should the application prepare?',
+    'Auto uses NVIDIA CUDA when a working NVIDIA GPU is detected, otherwise CPU. ' +
+    'CUDA downloads about 4.3 GiB of app-local dependencies on first launch. ' +
+    'CPU uses a smaller download. Models download separately. This choice also applies when updating an existing copy.',
+    True, False);
+  RuntimePage.Add('Auto (recommended)');
+  RuntimePage.Add('CPU');
+  RuntimePage.Add('NVIDIA CUDA');
+  RuntimePage.SelectedValueIndex := 0;
+  if ExpandConstant('{param:RUNTIME|auto}') = 'cpu' then RuntimePage.SelectedValueIndex := 1;
+  if ExpandConstant('{param:RUNTIME|auto}') = 'cuda' then RuntimePage.SelectedValueIndex := 2;
+  RuntimeRevision := GetDateTimeString('yyyy-mm-dd hh:nn:ss', '-', ':');
+end;
+
+function GetRuntimeSelection(Param: String): String;
+begin
+  Result := 'auto';
+  if RuntimePage.SelectedValueIndex = 1 then Result := 'cpu';
+  if RuntimePage.SelectedValueIndex = 2 then Result := 'cuda';
+end;
+
+function GetRuntimeRevision(Param: String): String;
+begin
+  Result := RuntimeRevision;
 end;
 
 // True once the user picked "Install" on the mode page (the default).
@@ -214,10 +243,6 @@ begin
     if ComparePackedVersion(BinaryVersion, Installed) > 0 then Installed := BinaryVersion;
   if ComparePackedVersion(Installed, Incoming) > 0 then begin
     Result := 'A newer version is already installed. Downgrades are not supported.';
-    exit;
-  end;
-  if CheckForMutexes('AutoSubtitlePlus.Running') then begin
-    Result := 'Finish running jobs and close Auto Subtitle Plus before updating.';
     exit;
   end;
   for Index := 0 to 1 do begin

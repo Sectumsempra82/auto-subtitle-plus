@@ -12,8 +12,15 @@ command-line editions. It asks how to set it up, then a destination folder.
 Because the suggested folder is inside Program Files, Setup always asks
 Windows to run elevated (one UAC prompt) even for Portable, which still only
 copies files into the folder you picked. First launch afterwards prepares
-verified app-local dependencies. Models download separately; CPU is the
-default and CUDA remains opt-in.
+verified app-local dependencies. Setup asks for Auto, CPU or NVIDIA CUDA.
+Auto detects a working NVIDIA GPU and prepares CUDA; otherwise it uses CPU.
+CUDA dependencies download about 4.3 GiB. Models download separately.
+The selected hardware also applies when updating an existing installation,
+replacing a stale runtime selection while preserving models and other data.
+New Install-mode copies keep dependencies and user data in a private folder
+under your LocalAppData, so first launch can write without administrator
+privileges. Existing sibling data folders remain in use. Portable copies
+keep data beside the application. AUTO_SUBTITLE_PLUS_DATA_DIR overrides both.
 
 Finish running jobs and close both editions before updating. Run the newer
 EXE without uninstalling first and pick the same folder; it replaces

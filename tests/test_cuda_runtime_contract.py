@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest import mock
 
 from auto_subtitle_plus import cuda_runtime
+from auto_subtitle_plus.backends import format_backend_error
 
 
 class FakeDistribution:
@@ -16,6 +17,16 @@ class FakeDistribution:
 
 
 class CudaRuntimeContractTests(unittest.TestCase):
+    def test_cpu_only_torch_error_explains_app_local_repair(self):
+        message = format_backend_error(RuntimeError("Torch not compiled with CUDA enabled"))
+        self.assertIn("CPU-only PyTorch", message)
+        self.assertIn("Setup CUDA.cmd", message)
+
+    def test_missing_cuda_error_explains_app_local_repair(self):
+        message = format_backend_error(RuntimeError("Library cublas64_12.dll is not found or cannot be loaded"))
+        self.assertIn("Setup CUDA.cmd", message)
+        self.assertIn("cublas64_12.dll", message)
+
     def test_non_windows_platform_is_noop(self):
         with mock.patch.object(cuda_runtime.sys, "platform", "linux"), \
              mock.patch.object(cuda_runtime, "distribution") as distribution, \

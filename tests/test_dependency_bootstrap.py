@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from urllib.error import HTTPError
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +17,35 @@ spec.loader.exec_module(bootstrap)
 
 
 class BootstrapTests(unittest.TestCase):
+    def test_installer_auto_choice_replaces_legacy_cpu_profile(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "installation.ini").write_text("[Application]\nRuntime=auto\nRuntimeRevision=new\n")
+            with patch.object(bootstrap, "default_runtime_device", return_value="cuda"):
+                selected = bootstrap.runtime_selection(root, {"device": "cpu"})
+            self.assertEqual(selected, {"device": "cuda", "selection": "auto", "installer_revision": "new"})
+
+    def test_explicit_cpu_choice_survives_later_launches(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "installation.ini").write_text("[Application]\nRuntime=auto\nRuntimeRevision=new\n")
+            selected = bootstrap.runtime_selection(root, {}, "cpu")
+            with patch.object(bootstrap, "default_runtime_device", side_effect=AssertionError("CPU must remain explicit")):
+                self.assertEqual(bootstrap.runtime_selection(root, selected), selected)
+
+    def test_updated_installer_cpu_choice_replaces_previous_cuda_selection(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "installation.ini").write_text("[Application]\nRuntime=cpu\nRuntimeRevision=new\n")
+            selected = bootstrap.runtime_selection(root, {"device": "cuda", "selection": "cuda", "installer_revision": "old"})
+            self.assertEqual(selected["device"], "cpu")
+
+    def test_auto_profile_rechecks_hardware_after_portable_move(self):
+        with tempfile.TemporaryDirectory() as temp:
+            with patch.object(bootstrap, "default_runtime_device", return_value="cpu"):
+                selected = bootstrap.runtime_selection(Path(temp), {"device": "cuda", "selection": "auto", "installer_revision": None})
+            self.assertEqual(selected["device"], "cpu")
+
     def item(self, contents=b"verified"):
         return {"filename": "package.whl", "size": len(contents), "sha256": hashlib.sha256(contents).hexdigest(),
                 "url": "https://files.pythonhosted.org/package.whl"}
@@ -128,6 +157,36 @@ class BootstrapTests(unittest.TestCase):
         self.assertNotIn("PYTHONHOME", env)
         self.assertNotIn("PYTHONPATH", env)
         self.assertNotIn("untrusted", env["PATH"])
+
+    def test_environment_exposes_only_app_local_cuda_libraries(self):
+        with tempfile.TemporaryDirectory() as temp:
+            runtime = Path(temp)
+            cublas = runtime / "site/nvidia/cublas/bin"
+            cublas.mkdir(parents=True)
+            with patch.dict("os.environ", {"PATH": "C:/untrusted/bin"}):
+                env = bootstrap.environment(Path("data"), runtime)
+            self.assertEqual(env["PATH"].split(bootstrap.os.pathsep)[0], str(cublas))
+            self.assertNotIn("untrusted", env["PATH"])
+            self.assertNotIn(str(runtime / "site/nvidia/cudnn/bin"), env["PATH"])
+
+    def test_default_runtime_detects_gpu_without_importing_torch(self):
+        driver = Mock()
+        driver.cuInit.return_value = 0
+        def device_count(pointer):
+            pointer._obj.value = 1
+            return 0
+        driver.cuDeviceGetCount.side_effect = device_count
+        with patch.object(bootstrap.sys, "platform", "win32"), patch.object(bootstrap.ctypes, "WinDLL", return_value=driver, create=True):
+            self.assertEqual(bootstrap.default_runtime_device(), "cuda")
+            driver.cuInit.return_value = 100
+            self.assertEqual(bootstrap.default_runtime_device(), "cpu")
+
+    def test_default_runtime_handles_absent_driver_and_non_windows(self):
+        with patch.object(bootstrap.sys, "platform", "win32"), patch.object(bootstrap.ctypes, "WinDLL", side_effect=OSError, create=True):
+            self.assertEqual(bootstrap.default_runtime_device(), "cpu")
+        with patch.object(bootstrap.sys, "platform", "darwin"), patch.object(bootstrap.ctypes, "WinDLL", create=True) as load:
+            self.assertEqual(bootstrap.default_runtime_device(), "cpu")
+            load.assert_not_called()
 
     def test_failed_publication_restores_previous_runtime(self):
         with tempfile.TemporaryDirectory() as temp:

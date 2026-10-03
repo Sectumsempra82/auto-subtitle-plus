@@ -4,7 +4,7 @@ Windows ships as a single native EXE, not the superseded 8.6 GiB PyInstaller
 bundle and not two separate portable/installer downloads. Dependencies come
 from pinned public upstream archives; preparation is app-local and needs no
 administrator. Distribution size and installed runtime size are different:
-CUDA still uses several GiB when explicitly selected. Models remain separate.
+CUDA still uses several GiB when selected directly or detected by Auto. Models remain separate.
 
 ## The single EXE
 
@@ -13,10 +13,11 @@ Running `AutoSubtitlePlus-Windows-x64.exe` asks:
 1. **Install** (Start Menu shortcut, optional desktop shortcut, uninstaller)
    or **Portable** (copy the application files only — nothing else on the
    computer changes, e.g. for a USB drive or a folder you manage yourself).
-2. A destination folder, defaulting to `%ProgramFiles%\Auto Subtitle Plus`
+2. Auto, CPU or NVIDIA CUDA; the choice also applies when updating a copy.
+3. A destination folder, defaulting to `%ProgramFiles%\Auto Subtitle Plus`
    for either choice; browse to pick anywhere else (portable users typically
    pick a removable drive or a plain local folder instead).
-3. If that folder already has content, whether to update/overwrite it in
+4. If that folder already has content, whether to update/overwrite it in
    place.
 
 That's it — there is no separate "installer" download and no separate "ZIP"

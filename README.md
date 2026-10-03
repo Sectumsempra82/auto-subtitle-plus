@@ -245,11 +245,14 @@ See [build commands, prerequisites, validation and licensing](packaging/README.m
 
 Run the EXE and launch the CLI or GUI executable it places in your chosen
 folder. First run downloads pinned, checksum-verified Python, FFmpeg and
-library packages into app-local storage. CPU is the initial runtime profile;
-`Setup CUDA.cmd` explicitly adds GPU dependencies. CLI setup excludes Qt.
+library packages into app-local storage. Setup offers Auto, CPU or NVIDIA CUDA;
+Auto uses CUDA when a working NVIDIA GPU is detected, otherwise CPU.
+`Setup CUDA.cmd` explicitly selects GPU dependencies. CLI setup excludes Qt.
 llama.cpp and models are acquired automatically when selected. An NVIDIA
 graphics driver is still required for CUDA. Models and settings live in
-`data` beside the executables; preserve it on upgrade.
+the existing `data` folder, or a private per-installation folder under
+LocalAppData for a new Install-mode copy. Portable keeps `data` beside the
+executables. Preserve user data on upgrade.
 `AUTO_SUBTITLE_PLUS_DATA_DIR` selects a shared writable data folder for both editions.
 No runtime pip/compiler, global Python or PATH changes are needed; the EXE
 itself requests one Windows administrator elevation because Program Files is

@@ -1,7 +1,20 @@
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $root = $PSScriptRoot
-$data = if ($env:AUTO_SUBTITLE_PLUS_DATA_DIR) { [IO.Path]::GetFullPath($env:AUTO_SUBTITLE_PLUS_DATA_DIR) } else { Join-Path $root 'data' }
+function Get-ApplicationDataDirectory([string]$ApplicationRoot) {
+    if ($env:AUTO_SUBTITLE_PLUS_DATA_DIR) { return [IO.Path]::GetFullPath($env:AUTO_SUBTITLE_PLUS_DATA_DIR) }
+    $siblingData = Join-Path $ApplicationRoot 'data'
+    if (-not (Test-Path -LiteralPath (Join-Path $ApplicationRoot 'installation.ini')) -or
+        -not (Select-String -LiteralPath (Join-Path $ApplicationRoot 'installation.ini') -Pattern '^Edition=Installed$' -Quiet)) { return $siblingData }
+    $installationHash = [Security.Cryptography.SHA256]::Create()
+    try {
+        $installationId = ([BitConverter]::ToString($installationHash.ComputeHash([Text.Encoding]::UTF8.GetBytes($ApplicationRoot.ToLowerInvariant())))).Replace('-', '').Substring(0, 20)
+    } finally { $installationHash.Dispose() }
+    $userData = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) ('AutoSubtitlePlus/installations/' + $installationId + '/data')
+    if ((Test-Path -LiteralPath $userData) -or -not (Test-Path -LiteralPath $siblingData)) { return $userData }
+    return $siblingData
+}
+$data = Get-ApplicationDataDirectory $root
 $env:AUTO_SUBTITLE_PLUS_DATA_DIR = $data
 $manifest = Get-Content -LiteralPath (Join-Path $root 'dependencies-windows.json') -Raw | ConvertFrom-Json
 function Write-Status([string]$Message) { [Console]::Error.WriteLine($Message) }

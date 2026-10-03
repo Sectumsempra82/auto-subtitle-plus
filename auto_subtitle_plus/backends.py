@@ -187,10 +187,17 @@ def load_backend_model(args: argparse.Namespace) -> Any:
 def format_backend_error(error: Exception) -> str:
     message = str(error)
     lower_message = message.lower()
+    if "torch not compiled with cuda enabled" in lower_message:
+        return (
+            "CUDA was selected, but this environment has CPU-only PyTorch. "
+            "On Windows, close the app and run Setup CUDA.cmd in the application folder, "
+            "then reopen it. Alternatively, select CPU. Original error: " + message
+        )
     if "cublas64_12.dll" in lower_message or "cudnn" in lower_message:
         return (
             "faster-whisper CUDA runtime is missing NVIDIA CUDA 12/cuDNN runtime DLLs "
-            "in this environment. Install the runtime in the active environment, or "
+            "in this environment. On Windows, close the app and run Setup CUDA.cmd "
+            "in the application folder, then reopen it. Install the runtime in the active environment, or "
             "retry with --device cpu and an int8 compute type. Original error: "
             f"{message}"
         )

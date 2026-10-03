@@ -1,5 +1,8 @@
 import hashlib
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 import tempfile
 import unittest
@@ -8,6 +11,32 @@ from tools.package_windows import verify_payload
 
 
 class InstallerPayloadTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == "win32", "Windows data directory selection")
+    def test_installed_data_is_writable_per_user_and_portable_data_stays_local(self):
+        source = Path(__file__).resolve().parents[1] / "packaging/Start-Application.ps1"
+        script = ("$tokens=$null; $errors=$null; "
+                  "$ast=[Management.Automation.Language.Parser]::ParseFile($env:ASP_TEST_SOURCE,[ref]$tokens,[ref]$errors); "
+                  "if ($errors.Count) {throw $errors[0]}; "
+                  "$fn=$ast.Find({param($n) $n -is [Management.Automation.Language.FunctionDefinitionAst] -and $n.Name -eq 'Get-ApplicationDataDirectory'},$true); "
+                  ". ([scriptblock]::Create($fn.Extent.Text)); Get-ApplicationDataDirectory $env:ASP_TEST_ROOT")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            environment = os.environ.copy()
+            environment.pop("AUTO_SUBTITLE_PLUS_DATA_DIR", None)
+            environment.update(ASP_TEST_SOURCE=str(source), ASP_TEST_ROOT=str(root))
+            def selected():
+                return Path(subprocess.check_output(["powershell.exe", "-NoProfile", "-Command", script], env=environment, text=True).strip())
+            (root / "installation.ini").write_text("[Application]\nEdition=Portable\n")
+            self.assertEqual(selected(), root / "data")
+            (root / "installation.ini").write_text("[Application]\nEdition=Installed\n")
+            installed = selected()
+            self.assertNotEqual(installed, root / "data")
+            self.assertIn("AutoSubtitlePlus", installed.parts)
+            (root / "data").mkdir()
+            self.assertEqual(selected(), root / "data")
+            environment["AUTO_SUBTITLE_PLUS_DATA_DIR"] = str(root / "custom")
+            self.assertEqual(selected(), root / "custom")
+
     def payload(self, root: Path) -> None:
         (root / 'launcher.exe').write_bytes(b'reviewed launcher')
         self.manifest(root, 'launcher.exe')

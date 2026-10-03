@@ -4,6 +4,8 @@ from __future__ import annotations
 import argparse
 import base64
 import builtins
+import ctypes
+import configparser
 from contextlib import contextmanager
 from functools import partial
 import hashlib
@@ -159,12 +161,45 @@ def environment(data, runtime):
     env = {key: value for key, value in os.environ.items()
            if not key.startswith(("PYTHON", "_PYI", "AUTO_SUBTITLE_PLUS_PORTABLE_"))}
     system = Path(os.environ.get("SystemRoot", "C:/Windows"))
-    env["PATH"] = os.pathsep.join([str(runtime / "ffmpeg/bin"), str(system / "System32"), str(system)])
+    cuda_paths = [runtime / "site/nvidia" / library / "bin"
+                  for library in ("cublas", "cudnn", "cuda_nvrtc")]
+    env["PATH"] = os.pathsep.join([str(path) for path in cuda_paths if path.is_dir()] +
+                                [str(runtime / "ffmpeg/bin"), str(system / "System32"), str(system)])
     env["AUTO_SUBTITLE_PLUS_DATA_DIR"] = str(data)
     env["PYTHONNOUSERSITE"] = "1"
     env["PYTHONDONTWRITEBYTECODE"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
     return env
+
+
+def default_runtime_device():
+    if sys.platform != "win32":
+        return "cpu"
+    try:
+        driver = ctypes.WinDLL("nvcuda.dll")
+        count = ctypes.c_int()
+        if driver.cuInit(0) == 0 and driver.cuDeviceGetCount(ctypes.byref(count)) == 0 and count.value > 0:
+            return "cuda"
+    except (OSError, AttributeError):
+        pass
+    return "cpu"
+
+
+def runtime_selection(root, profile, explicit=None):
+    configuration = configparser.ConfigParser()
+    configuration.read(root / "installation.ini", encoding="utf-8-sig")
+    revision = configuration.get("Application", "RuntimeRevision", fallback=None)
+    installed = configuration.get("Application", "Runtime", fallback="auto")
+    if explicit:
+        selection = explicit
+    elif revision is not None and revision != profile.get("installer_revision"):
+        selection = installed
+    else:
+        selection = profile.get("selection", profile.get("device", installed))
+    if selection not in ("auto", "cpu", "cuda"):
+        raise ValueError("Invalid runtime selection; choose auto, cpu or cuda")
+    device = default_runtime_device() if selection == "auto" else selection
+    return {"device": device, "selection": selection, "installer_revision": revision}
 
 
 def publish_runtime(stage, runtime):
@@ -226,6 +261,9 @@ def prepare(root, data, manifest, edition, device, offline=False, repair=False):
         unpacked.rename(stage / "ffmpeg")
         (stage / "ffmpeg-unpack").rmdir()
         check = "import torch, whisper, stable_whisper, faster_whisper, ctranslate2, transformers, psutil, sentencepiece; "
+        if device == "cuda":
+            check += ("import ctypes; assert torch.version.cuda is not None, 'CUDA profile requires CUDA-enabled PyTorch'; "
+                      "[ctypes.WinDLL(name, winmode=0) for name in ('cublas64_12.dll', 'cudnn64_9.dll', 'nvrtc64_120_0.dll')]; ")
         if edition == "GUI":
             check += "from PySide6 import QtCore, QtWidgets; "
         check += "print('Runtime imports verified')"
@@ -256,7 +294,7 @@ def main():
     data.mkdir(parents=True, exist_ok=True)
     raw = json.loads(base64.b64decode(os.environ.get("ASP_ARGUMENTS", "W10=")).decode("utf-8"))
     parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
-    parser.add_argument("--runtime-device", choices=("cpu", "cuda"))
+    parser.add_argument("--runtime-device", choices=("auto", "cpu", "cuda"))
     parser.add_argument("--setup-only", action="store_true")
     parser.add_argument("--check-dependencies", action="store_true")
     parser.add_argument("--repair-dependencies", action="store_true")
@@ -264,7 +302,9 @@ def main():
     offline = "--offline" in arguments
     manifest = json.loads((root / "dependencies-windows.json").read_text(encoding="utf-8"))
     profile = data / "runtime-profile.json"
-    device = options.runtime_device or (json.loads(profile.read_text())["device"] if profile.exists() else "cpu")
+    previous = json.loads(profile.read_text()) if profile.exists() else {}
+    selected = runtime_selection(root, previous, options.runtime_device)
+    device = selected["device"]
     edition = os.environ.get("ASP_EDITION", "CLI")
     if options.check_dependencies:
         runtime = data / "runtimes" / runtime_key(manifest, edition, device)
@@ -272,11 +312,11 @@ def main():
         print(json.dumps({"ready": ready, "edition": edition, "device": device, "runtime": str(runtime)}), file=sys.stdout, flush=True)
         return 0 if ready else 2
     runtime = data / "runtimes" / runtime_key(manifest, edition, device)
-    if options.repair_dependencies or options.runtime_device or not valid_runtime(runtime):
+    if options.repair_dependencies or selected != previous or not valid_runtime(runtime):
         with setup_lock(data):
             runtime = prepare(root, data, manifest, edition, device, offline, options.repair_dependencies)
             pending = profile.with_suffix(".pending")
-            pending.write_text(json.dumps({"device": device}))
+            pending.write_text(json.dumps(selected))
             pending.replace(profile)
     if options.setup_only:
         print("Dependency setup complete.", flush=True)

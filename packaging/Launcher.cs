@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -50,12 +51,16 @@ internal static class Launcher {
         var process = new Process { StartInfo = start, EnableRaisingEvents = true };
         int result = 1;
         bool finished = false;
+        var messages = new ConcurrentQueue<string>();
         DataReceivedEventHandler receive = (sender, ev) => {
-            if (ev.Data == null || form.IsDisposed) return;
-            form.BeginInvoke((Action)(() => {
-                if (ev.Data == "ASP_READY") form.Hide();
-                else output.AppendText(ev.Data + Environment.NewLine);
-            }));
+            if (ev.Data != null) messages.Enqueue(ev.Data);
+        };
+        Action drainMessages = () => {
+            string message;
+            while (messages.TryDequeue(out message)) {
+                if (message == "ASP_READY") form.Hide();
+                else output.AppendText(message + Environment.NewLine);
+            }
         };
         process.OutputDataReceived += receive;
         process.ErrorDataReceived += receive;
@@ -65,9 +70,11 @@ internal static class Launcher {
         };
         var timer = new System.Windows.Forms.Timer { Interval = 250 };
         timer.Tick += (sender, ev) => {
+            drainMessages();
             if (finished) return;
             try { if (!process.HasExited) return; } catch (InvalidOperationException) { return; }
             process.WaitForExit();
+            drainMessages();
             result = process.ExitCode;
             finished = true;
             if (result == 0) form.Close();
@@ -84,6 +91,9 @@ internal static class Launcher {
         cancel.Click += (sender, ev) => form.Close();
         timer.Start();
         Application.Run(form);
+        timer.Stop();
+        process.OutputDataReceived -= receive;
+        process.ErrorDataReceived -= receive;
         timer.Dispose(); process.Dispose();
         return result;
 #else

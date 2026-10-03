@@ -15,7 +15,8 @@ https://sectumsempra82.github.io/auto-subtitle-plus/guide/
 Tooltips work offline; the online guide requires a browser and network access.
 
 First run downloads verified dependencies into data, then starts the app.
-CPU is the initial runtime profile. Setup CUDA.cmd explicitly selects the
+Setup selects Auto, CPU or NVIDIA CUDA. Auto detects a working NVIDIA GPU;
+otherwise it uses CPU. Setup CUDA.cmd explicitly selects the
 larger GPU runtime; Setup CPU.cmd switches back. This changes available
 runtime capabilities, not transcription models or translation routes.
 Models download separately when selected. Internet is needed for missing
@@ -28,7 +29,7 @@ registry changes or automatic system-wide installation. Driver/OS prerequisites
 are never installed silently. Stop and explicitly approve any system installer.
 
 CLI setup options (also accepted by the GUI EXE):
-  --runtime-device cpu|cuda --setup-only
+  --runtime-device auto|cpu|cuda --setup-only
   --check-dependencies
   --repair-dependencies --setup-only
   --offline
